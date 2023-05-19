@@ -1,0 +1,116 @@
+## Scraping Literally Anything: Advanced Edition
+Be sure to act responsibly when implementing these techniques. You've been warned.
+
+### Mapping D.QSA + CSS Selectors
+
+Get the data you need directly from the console using the spread operator and `document.querySelectorAll`. Occasionally, you may need to polyfill the spread operator, but it's becoming less necessary. Right-click the `object` in the console and choose 'copy' to get the complete object.
+
+```javascript
+[...document.querySelectorAll('div[id*="partial-match"]')].map(item => item.innerText)
+```
+
+### Examples of Matching
+
+Combine CSS selectors in different ways to get at almost anything. Use this template as a basis for your unique combination.
+
+```javascript
+element[attribute="value"][anotherAttribute*="partially matched value"]:not([class])"
+```
+
+### Mutation Observers
+
+Mutation observers help you wait for certain elements to appear in JavaScript-heavy renderings. Use `new MutationObserver` to observe changes to an element (`body`). Monitor whether it has been `added`, `removed`, `attributes changed`, etc. Once you've got what you need, be sure to disconnect the observer with `observer.disconnect()`.
+
+### DQSA Shortcut
+
+Save time in the `devtools` console by typing `doc`, pressing `↲`, then typing `.qsa` and pressing `↲` again. This will autocomplete to `document.querySelectorAll`.
+
+## Advanced Puppeteer Techniques
+
+### Network Request Intercepting
+
+Puppeteer allows you to interact programmatically with a site, but you can also access data directly by reverse-engineering client fetching and network requests. This bypasses the need to deal with DOM elements.
+
+Possible use cases include:
+
+1. Increasing crawl speed by blocking unnecessary items from loading, such as images and stylesheets.
+2. Staying stealthy by blocking requests to analytics services, such as Google Analytics.
+3. Reading server responses to access more data than is being rendered. Always check here before traversing the DOM.
+4. Intercepting JS libraries, monkey patching key functions, and reverse-engineering site development.
+
+```javascript
+// Example of aborting requests for .png and .jpg images.
+const puppeteer = require('puppeteer');  
+  
+(async () => {  
+	const browser = await puppeteer.launch();  
+	const page = await browser.newPage();  
+	await page.setRequestInterception(true);  
+
+	page.on('request', interceptedRequest => {  
+		if (interceptedRequest.isInterceptResolutionHandled()) return;  
+			if (  
+				interceptedRequest.url().endsWith('.png') ||  
+				interceptedRequest.url().endsWith('.jpg')  
+				)  
+			interceptedRequest.abort();  
+			else interceptedRequest.continue();  
+			});  
+		await page.goto('https://example.com');  
+		await browser.close();  
+})();
+```
+
+### Client Spoofing
+
+When dealing with a site that makes requests to a third party, you can mimic these requests and modify the body `payload` or `urlParams`. This can allow you to alter limits, filters, search queries, and more.
+
+You may run into issues with CORS or client-server security if you're using API testing tools like Insomnia. The server may be expecting certain cookies or header requests that you can't provide.
+
+#### How to Find Endpoints
+
+1. Open the `Network` tab while performing actions that load data asynchronously. Remember to disable the cache.
+2. Use Puppeteer to automate the interception of data.
+3. Use a man-in-the-middle proxy like [MITM Proxy](https://mitmproxy.org/). This creates a local proxy server that captures all in/out traffic from your machine. It's useful when devtools isn't available
+
+ (e.g. for web extensions and software).
+
+#### Make the Request from Within the Page Evaluation
+
+You can bypass CORS and client-server security issues by making a native `fetch` request from within the page using `page.evaluate(() => {...})`. Then, return the value. 
+
+This technique, combined with preemptive request interception, can overcome most server-related fetching issues. It also reduces the time required to scrape at scale. 
+
+**Note**: Be mindful of rate limits. If unsure, use a proxy.
+
+### Intercepting Third-Party Libraries
+
+Listen for specific requests to JavaScript libraries, and replace them with your own versions. Many developers overlook this possibility, and you can take advantage of it to access hidden information. 
+
+**Note**: This is powerful but can have serious implications. Always understand what you're doing and who it affects. Act responsibly and respectfully.
+
+### Automating Endpoint Searches Through Crawling
+
+Use Puppeteer's request intercept event listener and programmatic website traversal to build a crawler that intercepts backend requests for later analysis.
+
+```javascript
+// Step 1: Set up Intercept Listener
+// 1. Listen for POST requests
+// 2. Listen for requests with body / searchParams
+// 3. Check requests for common phrases like '/api/v1'
+// 4. Optional. Replace response data to unlock features on site. 
+// 5. Dump everything for later analysis
+
+// Step 2: Crawl site
+// 1. Parse Sitemap and visit each page. (Split into templates where needed)
+// 2. Mimic crawl behaviour (doc.qsa all links on a page, open each in a new tab, rinse repeat)
+// 3. Add logic to determine duplicate page templates / requests. (Redis cache?)
+```
+
+## Other Scraping Techniques
+
+### TamperMonkey Snippets
+
+[TamperMonkey](https://tampermonkey.net/) is a Chrome extension that lets you run custom JavaScript snippets on any site, once approved by the user. Use it to augment websites permanently, e.g., adding a CSV export button to a profile page.
+
+[Greasemonkey](https://addons.mozilla.org/en-US/firefox/addon/greasemonkey/) offers similar functionality for Firefox users.

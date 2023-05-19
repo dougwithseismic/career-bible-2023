@@ -1,0 +1,34 @@
+# Pass Two: Making it right
+
+#### Objective: It works as expected and is understandable. 
+
+Now that your code is working, start adding more specific types to replace any `[key]: any` you might have used. Break down large functions into smaller, named functions. This will make your code easier to understand and debug. Start introducing some testing at this stage to make sure your code not only works, but it works as expected.
+
+```tsx
+// Pass Two: user-profile.tsx
+interface User {
+  id: number;
+  name: string;
+  email: string;
+  // Other fields...
+}
+
+export const UserProfile = () => {
+  const [user, setUser] = useState<User | null>(null);
+
+  const fetchUser = async () => {
+    const res = await fetch(`https://.../users`);
+    const user = await res.json() as User;
+    setUser(user);
+  };
+
+  useEffect(() => {
+    fetchUser();
+  }, []);
+
+  return (
+    // JSX
+  );
+};
+
+```

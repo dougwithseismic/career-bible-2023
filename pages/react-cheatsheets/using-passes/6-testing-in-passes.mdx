@@ -1,0 +1,109 @@
+## Testing: Staying on point at each pass
+
+For the most part, I don't bother testing, but it has its place, definitely. As your team grows and you can't properly vet those that work on your codebase, it's important to have some safety nets for when shit hits the fan.
+
+Let's go over each pass again with a focus on making our code testable. We'll be using Jest along with React Testing Library for our tests as they're commonly used with Next.js.
+
+#### Pass One: Get it done
+
+In this initial stage, testing may not be the primary concern. However, you can still write a simple test to check if your component renders without crashing
+
+```tsx
+// user-profile.test.tsx
+import { render } from "@testing-library/react";
+import UserProfile from "./user-profile";
+
+it("renders without crashing", () => {
+  render(<UserProfile />);
+});
+```
+
+#### Pass Two: Make it right
+
+At this stage, you're refining your component and adding more specificity. You can add a few more tests here to check if your component is working as expected
+
+```tsx
+// user-profile.test.tsx
+import { render, screen } from "@testing-library/react";
+import UserProfile from "./user-profile";
+
+// Mock fetch
+global.fetch = jest.fn(() =>
+  Promise.resolve({
+    json: () =>
+      Promise.resolve({ id: 1, name: "John Doe", email: "john@example.com" }),
+  })
+);
+
+it("displays user name and email", async () => {
+  render(<UserProfile />);
+  const userName = await screen.findByText(/John Doe/i);
+  const userEmail = await screen.findByText(/john@example.com/i);
+  expect(userName).toBeInTheDocument();
+  expect(userEmail).toBeInTheDocument();
+});
+```
+
+#### Pass Three: Make it good
+
+Here, you optimize and refactor your component. You might extract state logic into a custom hook, which should also be tested.
+
+```tsx
+// useUser.test.ts
+import { renderHook, act } from "@testing-library/react-hooks";
+import { useUser } from "./hooks/useUser";
+
+it("handles fetch errors", async () => {
+  // Mock fetch to simulate an error
+  global.fetch = jest.fn(() => Promise.reject("API error"));
+
+  const { result, waitForNextUpdate } = renderHook(() => useUser());
+
+  // Wait for useEffect to complete
+  await act(() => waitForNextUpdate());
+
+  expect(result.current.error).toBe("API error");
+});
+```
+
+#### Pass Four: Make it resilient
+
+At this point, we are adding robustness to our code, considering error handling, edge cases, and the user experience when things go wrong. We'll add tests for these error scenarios as well.
+
+```tsx
+// user-profile.test.tsx
+import { render, screen } from "@testing-library/react";
+import UserProfile from "./user-profile";
+import { useUser } from "./hooks/useUser";
+
+// Mock the custom hook
+jest.mock("./hooks/useUser");
+
+it("displays error message when fetch fails", async () => {
+  // Setup the mock to return an error
+  (useUser as jest.Mock).mockReturnValue({
+    user: null,
+    error: "Failed to fetch user",
+  });
+
+  render(<UserProfile />);
+  const errorMessage = await screen.findByText(/Failed to fetch user/i);
+  expect(errorMessage).toBeInTheDocument();
+});
+
+it("displays user data when fetch succeeds", async () => {
+  // Setup the mock to return a user
+  (useUser as jest.Mock).mockReturnValue({
+    user: { id: 1, name: "John Doe", email: "john@example.com" },
+    error: null,
+  });
+
+  render(<UserProfile />);
+  const userName = await screen.findByText(/John Doe/i);
+  const userEmail = await screen.findByText(/john@example.com/i);
+  expect(userName).toBeInTheDocument();
+  expect(userEmail).toBeInTheDocument();
+});
+```
+
+These tests ensure that the UserProfile component correctly handles both success and error scenarios from the `useUser` hook. The `jest.mock` function is used to replace the `useUser` hook with a mock implementation for the purpose of the tests.

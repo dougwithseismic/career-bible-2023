@@ -1,0 +1,41 @@
+# Pass One: Getting it done
+
+#### When? Immediately.
+#### Objective: It works. That's it.
+
+The aim here is to get started. Pen on paper mode, let's go. Create your new component file (`kebab-case.tsx`) and get to work scaffolding everything you need. Move fast, stay native, and get to a point that things work.
+
+Keep types to a minimum, don't be afraid of `[key] : any` and definitely work from one single file. `useState`, `useEffect` etc are more than enough at this stage - You can always refactor that messy logic to custom hook later on if needed. The objective is to get your code working so you can move onto Pass two.
+
+
+
+```tsx
+// Pass One: user-profile.tsx
+
+import { useState, useEffect } from 'react';
+
+const UserProfile = () => {
+  const [user, setUser] = useState<any>(null);
+
+  useEffect(() => {
+    fetch(`https://api.example.com/user/1`)
+      .then(response => response.json())
+      .then(data => setUser(data));
+  }, []);
+
+  if (!user) {
+    return <div>Loading...</div>;
+  }
+
+  return (
+    <div className="p-4">
+      <h2 className="text-2xl font-bold mb-2">{user.name}</h2>
+      <p className="text-gray-700">{user.email}</p>
+    </div>
+  );
+};
+
+export default UserProfile;
+
+
+```

@@ -1,15 +1,15 @@
 {
-  "index": "Introduction",
-  "another": "Another Page",
-  "advanced": "Advanced (A Folder)",
-  "about": {
-    "title": "About",
-    "type": "page"
-  },
-  "contact": {
-    "title": "Contact ↗",
-    "type": "page",
-    "href": "https://twitter.com/shuding_",
-    "newWindow": true
-  }
+    "index": "Welcome - Read Me First",
+    "react-cheatsheets": "Developer Cheatsheets",
+    "scraping-guide": "Scraping Literally Anything",
+    "about": {
+        "title": "About",
+        "type": "page"
+    },
+    "contact": {
+        "title": "Twitter ↗",
+        "type": "page",
+        "href": "https://twitter.com/dougsilkstone",
+        "newWindow": true
+    }
 }

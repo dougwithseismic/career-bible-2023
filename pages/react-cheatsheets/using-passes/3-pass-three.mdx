@@ -1,0 +1,41 @@
+#### Pass Three: Getting it Fast
+
+##### Objective: It's efficient and manageable.
+
+This is the juncture where the lens shifts towards optimising your code. Could certain segments of your code benefit from memoization to bolster performance? Could state and functions migrate into custom hooks to enhance organisation and reusability? It's also time to contemplate file-splitting if they've become a bit of a behemoth.
+
+Speaking of tests, they need a bit of attention here, too. As you refactor and optimise, your tests may need updates to reflect any changes. It's also a good opportunity to review your coverage, ensuring you've not missed any crucial functionality.
+
+For instance, if you have moved some logic into a custom hook, you could add tests specifically for this hook:
+
+```typescript
+// Pass Three: useUser.ts
+export const useUser = () => {
+  const [user, setUser] = useState<User | null>(null);
+
+  const fetchUser = async () => {
+    const res = await fetch(`https://.../users`);
+    const user = await res.json() as User;
+    setUser(user);
+  };
+
+  useEffect(() => {
+    fetchUser();
+  }, []);
+
+  return user;
+};
+
+// Pass Three: user-profile.tsx
+import { useUser } from './hooks/useUser';
+
+export const UserProfile = () => {
+  const user = useUser();
+
+  return (
+    // JSX
+  );
+};
+```
+
+In this test, we're using the `renderHook` function from React Testing Library's Hooks testing library. You would replace the "...Your test assertions here..." comment with tests specific to what your hook does. By the end of Pass Three, your code should be sleek, efficient, and your tests should ensure everything still works as expected after the optimisations.
