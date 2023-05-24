@@ -1,0 +1,112 @@
+# Cheatsheet: Understanding Render Cycles in React
+
+It's time we break down the mechanics behind React's rendering process. We'll venture into when and why our components render, and more importantly, how to prevent those superfluous rerenders. 
+
+## When Does a Component Render?
+
+First things first, let's lay down the groundwork and discuss when a component renders. A component renders under the following scenarios:
+
+1. Initial rendering: Every component renders at least once when it's initially added to the DOM.
+
+2. Parent Rendering: If a component's parent component rerenders, it triggers a render for the child component too.
+
+3. Prop Changes: When a component receives new props, it triggers a rerender.
+
+4. State Changes: A state change using `setState` or `useState` hooks prompts a rerender.
+
+5. Context Changes: A component consuming a Context will rerender if the Context value changes.
+
+Here's a simple component that renders when its parent does, or when props or state change.
+
+**ParentComponent.tsx**
+```typescript
+import React, { useState } from 'react';
+import ChildComponent from './ChildComponent';
+
+const ParentComponent = () => {
+  const [counter, setCounter] = useState(0);
+
+  return (
+    <div>
+      <button onClick={() => setCounter(counter + 1)}>Increase Counter</button>
+      <ChildComponent counter={counter} />
+    </div>
+  );
+};
+
+export default ParentComponent;
+```
+
+**ChildComponent.tsx**
+```typescript
+import React from 'react';
+
+interface ChildProps {
+  counter: number;
+}
+
+const ChildComponent: React.FC<ChildProps> = ({ counter }) => {
+  console.log('ChildComponent rendered');
+  return <div>Counter: {counter}</div>;
+};
+
+export default ChildComponent;
+```
+
+## Mitigating Unnecessary Rerenders
+
+While React is pretty efficient in managing renders, unnecessary rerenders can still degrade performance, especially for complex applications. Here are some tactics to handle such cases.
+
+### Using `React.memo`
+
+`React.memo` is a higher order component that prevents unnecessary rerenders when the props remain the same. It's pretty straightforward to use:
+
+**MemoizedChildComponent.tsx**
+```typescript
+import React from 'react';
+
+interface ChildProps {
+  counter: number;
+}
+
+const ChildComponent: React.FC<ChildProps> = ({ counter }) => {
+  console.log('ChildComponent rendered');
+  return <div>Counter: {counter}</div>;
+};
+
+export default React.memo(ChildComponent);
+```
+
+### Using `useCallback` and `useMemo` hooks
+
+`useCallback` returns a memoized version of the callback function that only changes if one of the dependencies has changed, and `useMemo` returns a memoized value that only recomputes if one of the dependencies has changed. These hooks can be very useful when passing callbacks or props to child components.
+
+```typescript
+import React, { useCallback, useMemo } from 'react';
+import ChildComponent from './ChildComponent';
+
+const ParentComponent = () => {
+  const [counter, setCounter] = useState(0);
+  
+  const incrementCounter = useCallback(() => {
+    setCounter(counter => counter + 1);
+  }, []);
+
+  const counterProps = useMemo(() => ({ counter }), [counter]);
+
+  return (
+    <div>
+      <button onClick={incrementCounter}>Increase Counter</button>
+      <ChildComponent {...counterProps} />
+    </div>
+  );
+};
+
+export default ParentComponent;
+```
+
+Understanding React's rendering process and lifecycle is vital for developing efficient applications. However, remember that premature optimization is the root of all evil. React is already designed to be fast, and many optimizations can lead to complex code. Only apply these techniques when necessary
+
+. 
+
+Next time we'll take a deeper dive into the performance tools you can use to measure your React application's performance. Until then, keep building and learning.

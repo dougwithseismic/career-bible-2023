@@ -1,0 +1,36 @@
+# Cheatsheet: Kebab-case for Component File Names
+
+In advanced software development, minor details such as file naming conventions can make a significant difference. Here's a closer look at the argument for using kebab-case for component files:
+
+**Arguments for Kebab-case**:
+
+1. **Platform Uniformity**: Kebab-case ensures cross-platform consistency. This is crucial since different operating systems, like Windows (case-insensitive) and Linux (case-sensitive), treat file casing differently. Kebab-case can enhance code portability and mitigate potential issues.
+
+```typescript
+// user-profile.tsx
+export const UserProfile = () => {
+  /*...*/
+};
+```
+
+2. **URL Compatibility**: When component names tie directly to routes, kebab-case is a safe choice. It doesn't misinterpret spaces or underscores as special characters or encodings since URLs are case-insensitive.
+
+```typescript
+// user-profile.tsx -> www.example.com/user-profile
+```
+
+3. **Adherence to Conventions**: Kebab-case is a standard convention in many developer communities. Sticking to it can reduce cognitive load and confusion for developers new to your project, ensuring accessibility and easy navigation.
+
+4. **Improved Readability**: Kebab-case enhances readability of multi-word filenames and eliminates confusion with camelCase or PascalCase.
+
+```typescript
+// user-profile-settings.tsx is more readable than UserProfileSettings.tsx
+```
+
+**Arguments Against Kebab-case:**
+
+1. **Inconsistency in Coding Style**: While kebab-case might be suitable for filenames, it's not used in JavaScript or TypeScript for variable names, class names, or function names. This might lead to a cognitive dissonance when the filename differs in style from the content.
+
+2. **Auto-import Issues**: Some IDEs may not automatically recognize kebab-case files, leading to manual importing.
+
+While the impact of using kebab-case may seem minimal, it's a strategic choice that can enhance maintainability and readability. However, remember to weigh it against potential issues like coding style inconsistency and IDE compatibility. Above all, consistency within your project or team should be the top priority.

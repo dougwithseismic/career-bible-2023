@@ -1,0 +1,94 @@
+# Cheatsheet: Dipping Into Suspense & Concurrent Mode with TypeScript & React
+
+Pull up a chair, and let's dive into the React toolbox again, shall we? This time, we're uncovering the mysteries of Suspense and Concurrent Mode. They sound fancy, don't they? That's because they are, and they're about to change the way you think about loading states and perceived performance in your React apps.
+
+## Setting the Stage - Loading States and Janky User Experience
+
+We've all been there - you have components in your app that fetch data, and while they're waiting for that data, they need to show some loading state. Here's an example, fetching products for our online store:
+
+**ProductList.tsx**
+```typescript
+import React, { useEffect, useState } from 'react';
+import { fetchProducts } from './api';
+
+const ProductList = () => {
+  const [products, setProducts] = useState<Product[] | null>(null);
+
+  useEffect(() => {
+    fetchProducts().then(setProducts);
+  }, []);
+
+  if (!products) {
+    return <div>Loading...</div>;
+  }
+
+  return (
+    <ul>
+      {products.map(product => <li key={product.id}>{product.name}</li>)}
+    </ul>
+  );
+};
+
+export default ProductList;
+```
+
+## The New Kids on the Block - Suspense and Concurrent Mode
+
+Suspense and Concurrent Mode take a new approach to this. Instead of showing a loading state, Suspense allows you to wait for some code to load and declaratively specify a loading UI. Concurrent Mode, on the other hand, allows your app to stay responsive even under heavy load. Sounds like a dream team, doesn't it? 
+
+Let's set up a suspense cache for our products.
+
+**suspenseCache.ts**
+```typescript
+import { fetchProducts } from './api';
+
+export const productCache = createResource(fetchProducts);
+```
+
+Now, here's how you can use this in the `ProductList` component with Suspense.
+
+**ProductList.tsx**
+```typescript
+import React, { Suspense } from 'react';
+import { productCache } from './suspenseCache';
+
+const ProductList = () => {
+  const products = productCache.read();
+
+  return (
+    <ul>
+      {products.map(product => <li key={product.id}>{product.name}</li>)}
+    </ul>
+  );
+};
+
+const SuspensefulProductList = () => (
+  <Suspense fallback={<div>Loading...</div>}>
+    <ProductList />
+  </Suspense>
+);
+
+export default SuspensefulProductList;
+```
+
+Alright, now, let's put on our wizard hats and enable Concurrent Mode. It's as simple as wrapping your app in `React.unstable_ConcurrentMode`.
+
+**App.tsx**
+```typescript
+import React from 'react';
+import SuspensefulProductList from './ProductList';
+
+const App = () => (
+  <React.unstable_ConcurrentMode>
+    <SuspensefulProductList />
+  </React.unstable_ConcurrentMode>
+);
+
+export default App;
+```
+
+## The Takeaway
+
+Just like that, you've just waltzed your way into a better loading state handling with Suspense and a smoother user experience with Concurrent Mode. You've gotta love it when code not only becomes cleaner but also provides a more seamless user experience. 
+
+Do remember, Concurrent Mode and Suspense are still experimental as of React 18, so use them judiciously. But don't be afraid to experiment and see how they can improve your apps. Until next time, happy coding!

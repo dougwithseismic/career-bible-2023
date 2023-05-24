@@ -1,0 +1,72 @@
+# Cheatsheet: Lazy Loading Components with React.lazy
+
+When building extensive applications, we often end up with a substantial JavaScript bundle size that can affect the load time of our app. React, however, provides us with a handy feature for code splitting and lazy loading to mitigate this issue. Today, let's delve into how `React.lazy` can assist us in reducing initial load time.
+
+## An Overview of React.lazy
+
+`React.lazy()` is a function that allows you to render a dynamic import as a regular component. It makes it possible to load components only when they are needed, instead of loading all at once. Here's how you can implement it:
+
+**GreetComponent.tsx**
+```typescript
+import React from 'react';
+
+const GreetComponent: React.FC = () => <h1>Hello, React!</h1>;
+
+export default GreetComponent;
+```
+
+**App.tsx**
+```typescript
+import React, { Suspense } from 'react';
+
+const GreetComponent = React.lazy(() => import('./GreetComponent'));
+
+const App: React.FC = () => {
+  return (
+    <div className="App">
+      <Suspense fallback={<div>Loading...</div>}>
+        <GreetComponent />
+      </Suspense>
+    </div>
+  );
+};
+
+export default App;
+```
+
+## Code Splitting with React.lazy
+
+Code-splitting is another feature that goes hand in hand with `React.lazy()`. It allows us to split our code into small chunks which can then be loaded on demand.
+
+Webpack, the module bundler that Create React App uses under the hood, supports this out of the box via the dynamic `import()` syntax.
+
+```typescript
+import React, { Suspense } from 'react';
+
+const ComponentOne = React.lazy(() => import('./ComponentOne'));
+const ComponentTwo = React.lazy(() => import('./ComponentTwo'));
+
+const App: React.FC = () => {
+  return (
+    <div className="App">
+      <Suspense fallback={<div>Loading...</div>}>
+        <ComponentOne />
+        <ComponentTwo />
+      </Suspense>
+    </div>
+  );
+};
+
+export default App;
+```
+In the above example, `ComponentOne` and `ComponentTwo` will be loaded only when they are rendered for the first time, hence reducing the initial load time.
+
+## Things to Note:
+
+**Fallback Component:** When using `React.lazy`, we should wrap it in a `Suspense` component. The fallback prop takes the component that you want to render while waiting for the lazy component to load.
+
+**Default Export:** `React.lazy()` requires the module to export a default component. So if your component uses named exports, you might want to create an intermediate module that reexports it as the default.
+
+**Error Boundaries:** If the module fails to load (for instance, due to network failure), it will trigger an error. This error can be handled by wrapping the lazy component with an error boundary.
+
+There you have it! With `React.lazy` in your toolbox, you're well-equipped to tackle large bundle sizes and improve user experience with faster load times. Just remember, while `React.lazy` is a mighty tool, it's not always necessary to use it for every component in your app. Use it where it makes sense, typically for larger components which are not initially visible. As always, happy coding!

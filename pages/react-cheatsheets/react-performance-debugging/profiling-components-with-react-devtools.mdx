@@ -1,0 +1,99 @@
+# React Component Profiling Cheatsheet
+
+**Note**: Ensure you have the React DevTools extension installed in your browser to follow this guide.
+
+### Accessing the Profiler
+
+1. Open React DevTools in your browser's developer tools panel.
+2. Click on the "Profiler" tab in the toolbar.
+
+### Starting and Stopping the Profiling Session
+
+1. Click the "Record" button to start a profiling session.
+2. Interact with your app as you normally would. The Profiler will collect performance information during this time.
+3. Click the "Record" button again to stop the profiling session.
+
+### Analyzing the Results
+
+1. **Flamegraph**: The Flamegraph represents each component that was rendered during the profiling session. Each bar represents a React component (the wider the bar, the longer it took to render).
+
+2. **Ranked Chart**: The ranked chart presents the same information as the flame graph, but in a list form sorted by render time.
+
+3. **Component Chart**: The component chart shows how many times each component rendered during the profiling session.
+
+### Understanding the Flamegraph
+
+1. **Color**: Each bar in the flamegraph is color-coded to represent how much time was spent rendering the components:
+
+   - Gray: time spent rendering components outside of the profiling session.
+   - Blue: time spent on the current commit where components were rendered.
+   - Yellow: time spent on other activities.
+
+2. **Width**: The width of a bar represents how long the component (and its children) took to render. A wider bar means a longer render time.
+
+### Selecting a Commit
+
+1. Use the slider or the arrows at the bottom to select a specific commit to inspect.
+
+### Inspecting a Component
+
+1. Click on a bar in the flamegraph to see more information about the component. This will show:
+   - Which props changed since the last render.
+   - The actual and base durations of the component.
+
+### Analyzing the Results
+
+1. **Long Bars in the Flamegraph**: Look for bars that are significantly wider than others. These components took longer to render and might be candidates for optimization.
+
+2. **Frequent Re-renders in the Component Chart**: If a component shows a high count in the component chart, it might be rendering too often.
+
+### Profiling Options
+
+1. **Record why each component rendered while profiling**: This option can provide more information about why a component re-rendered.
+
+2. **Highlight updates when components render**: This can be useful to visually see which parts of the page are re-rendering.
+
+
+### Case Study 1: Profiling a Slow List Component
+
+Imagine you have a `ProductList` component that renders a large list of `ProductItem` components. You've noticed that when a single product is added or removed, the entire list re-renders, causing a noticeable delay.
+
+**Step 1: Start Profiling**
+
+Start the profiling session and interact with the `ProductList` component.
+
+**Step 2: Analyze the Flamegraph**
+
+In the Flamegraph, you notice that `ProductList` is taking a considerable amount of time to render, and every `ProductItem` is also being re-rendered.
+
+**Step 3: Inspect the Component**
+
+By selecting the `ProductList` component in the flamegraph, you find that the `products` prop is changing every time, causing the component and all its children to re-render.
+
+**Solution**
+
+In this case, the issue might be that a new `products` array is created every time the state changes. A possible solution would be to ensure that product items have consistent identities across renders. You could use the `useMemo` hook to memoize the `products` array, or ensure that the `ProductItem` components are only re-rendering when their specific product changes.
+
+### Case Study 2: Profiling a Complex Form Component
+
+Let's say you have a `UserForm` component with several input fields. Users have reported that typing into the fields feels sluggish.
+
+**Step 1: Start Profiling**
+
+Begin the profiling session, then interact with the form by typing into the fields.
+
+**Step 2: Analyze the Component Chart**
+
+The Component Chart reveals that the `UserForm` component is re-rendering every time you type a character into any field.
+
+**Step 3: Inspect the Component**
+
+Upon selecting the `UserForm` in the flamegraph, you find that the entire form re-renders every time the `formValues` state changes.
+
+**Solution**
+
+The issue could be that the form is keeping all of its values in a single state object, causing a re-render every time any field changes. A possible solution would be to break up the `formValues` state into individual state variables for each field using the `useState` hook. This way, changing the state of one field doesn't cause the others to re-render.
+
+In both these cases, using React DevTools Profiler allowed us to identify performance issues and helped us strategize the solutions to enhance the app's performance.
+
+Remember, the goal of profiling is not to eliminate all re-renders or to make your flame graph perfectly flat. Instead, use these tools to find the areas of your app that are doing more work than necessary, and optimize accordingly.

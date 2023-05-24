@@ -2,16 +2,16 @@ import React from "react";
 import { DocsThemeConfig } from "nextra-theme-docs";
 
 const config: DocsThemeConfig = {
-  logo: <span>Literally everything I know by Doug Silkstone</span>,
+  logo: <span>Practical Guides From A Self-Taught Technical Lead</span>,
   project: {
     link: "https://github.com/shuding/nextra-docs-template",
   },
   chat: {
-    link: "https://discord.com",
+    link: "https://twitter.com/dougiesilkstone",
   },
   docsRepositoryBase: "https://github.com/shuding/nextra-docs-template",
   footer: {
-    text: "Everything I know about shipping products.",
+    text: "A growing compendium of my career knowledge. Updated Weekly.",
   },
 };
 

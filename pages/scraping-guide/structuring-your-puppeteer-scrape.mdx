@@ -1,0 +1,67 @@
+1. **Initial Setup**: Install Puppeteer and necessary plugins. Here we're using the Stealth plugin to prevent detection of Puppeteer by the website.
+
+```typescript
+import puppeteer from 'puppeteer-extra';
+import StealthPlugin from 'puppeteer-extra-plugin-stealth';
+puppeteer.use(StealthPlugin());
+
+//Launch browser
+const browser = await puppeteer.launch({ headless: false }); // Set headless to false for debugging. In production, you'd want this to be true.
+```
+> **Do**: Use plugins like `puppeteer-extra-plugin-stealth` to bypass common bot detection techniques.\
+> **Don't**: Don't forget to handle errors during launch.
+
+2. **Define Target URLs**: These could be hardcoded or dynamically generated.
+
+```typescript
+const urlsToScrape: string[] = ["https://example.com", "https://anotherexample.com"];
+```
+> **Do**: Make sure the URLs are valid and accessible.\
+> **Don't**: Don't overload the target server with too many requests at once.
+
+3. **Scrape**: Visit each page and extract the necessary data.
+
+```typescript
+const scrapedData: any[] = []; // Adjust the type to fit your data structure
+
+for (let url of urlsToScrape) {
+    const page = await browser.newPage();
+    await page.goto(url);
+    // Scrape data
+    const data = await page.evaluate(() => {
+        // ...scrape data here...
+    });
+    scrapedData.push(data);
+    await page.close();
+}
+```
+> **Do**: Respect the target website's `robots.txt` rules. Also, consider closing each page after use to free up resources.\
+> **Don't**: Don't neglect error handling here. If one page fails, you don't want your entire scraping job to fail.
+
+4. **Wrangle & Process Data**: Format and clean the scraped data.
+
+```typescript
+const processedData = scrapedData.map((data) => {
+    // ...process data here...
+});
+```
+> **Do**: Handle unexpected or missing data gracefully during processing.\
+> **Don't**: Don't process data on the fly while scraping. It's usually better to separate these steps.
+
+5. **Store/Output Data**: This could be writing data to a file, a database, or sending it to an API.
+
+```typescript
+import fs from 'fs';
+fs.writeFileSync('./output.json', JSON.stringify(processedData, null, 2));
+```
+> **Do**: Ensure that the location where you're storing data has enough space and proper write permissions.\
+> **Don't**: Don't forget to handle IO errors.
+
+6. **Close the Browser**: Important to free up resources.
+
+```typescript
+await browser.close();
+```
+> **Do**: Always clean up after your script is done to prevent memory leaks.\
+> **Don't**: Don't leave browser instances hanging, especially in a production environment.
+

@@ -1,0 +1,97 @@
+# Cheatsheet: Understanding useMemo and useCallback in React
+
+React provides us with a variety of hooks, each with its own set of use cases and considerations. Today, we'll focus on `useMemo` and `useCallback`, unraveling their differences and understanding when to reach for each. 
+
+## useMemo: 
+
+`useMemo` returns a memoized value. You can think of this hook as a way to tell React to store a value and only recompute it when certain dependencies change. This is extremely useful for expensive calculations.
+
+Here's an example where we compute factorial of a number using `useMemo`:
+
+**FactorialComponent.tsx**
+```typescript
+import React, { useState, useMemo } from 'react';
+
+const calculateFactorial = (num: number): number => {
+  if (num === 0) return 1;
+  let i = num;
+  while (--num) i *= num;
+  return i;
+};
+
+const FactorialComponent: React.FC = () => {
+  const [number, setNumber] = useState(5);
+
+  const factorial = useMemo(() => calculateFactorial(number), [number]);
+
+  return (
+    <div>
+      <input
+        type="number"
+        value={number}
+        onChange={(e) => setNumber(Number(e.target.value))}
+      />
+      <p>Factorial: {factorial}</p>
+    </div>
+  );
+};
+
+export default FactorialComponent;
+```
+
+In the above example, the factorial calculation will only run when the `number` state changes.
+
+## useCallback:
+
+`useCallback` on the other hand, returns a memoized version of the callback function that only changes if one of the dependencies has changed. This is useful when passing callbacks to optimized child components that rely on reference equality to prevent unnecessary renders.
+
+Here's an example where we use `useCallback` to ensure that the `handleClick` function we pass to a child component doesn't change unless necessary:
+
+**CallbackComponent.tsx**
+```typescript
+import React, { useState, useCallback } from 'react';
+import ChildComponent from './ChildComponent';
+
+const CallbackComponent: React.FC = () => {
+  const [counter, setCounter] = useState(0);
+
+  const handleClick = useCallback(() => {
+    setCounter((counter) => counter + 1);
+  }, []);
+
+  return (
+    <div>
+      <ChildComponent onClick={handleClick} />
+      <p>Counter: {counter}</p>
+    </div>
+  );
+};
+
+export default CallbackComponent;
+```
+
+**ChildComponent.tsx**
+```typescript
+import React, { ReactElement } from 'react';
+
+interface ChildProps {
+  onClick: () => void;
+}
+
+const ChildComponent: React.FC<ChildProps> = React.memo(({ onClick }) => {
+  console.log('ChildComponent rendered');
+  return <button onClick={onClick}>Increase Counter</button>;
+});
+
+export default ChildComponent;
+```
+
+In this case, the child component will not rerender unnecessarily because the `handleClick` callback maintains its identity across rerenders, thanks to `useCallback`.
+
+## When to Use useMemo and useCallback
+
+As a rule of thumb, use `useMemo` when you need to optimize expensive computations and `useCallback` when you pass callbacks to optimized child components.
+
+However, it's important to note that **over-optimization can lead to more harm than good**. Both `useMemo` and `useCallback` come with their own overhead, so use them judiciously and only when necessary.
+
+So there you have it, a concise exploration into the realm of `useMemo` and `useCallback`. These tools can be a boon to your React performance, but remember the golden rule of optimization: don't do it prematurely. Happy coding!

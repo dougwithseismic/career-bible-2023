@@ -1,0 +1,202 @@
+# Cheatsheet: Advanced CSS Selector Patterns for Console Usage
+
+Using a hypothetical HTML structure, we'll illustrate the types of elements each selector pattern might target. 
+
+```jsx
+<div id="main">
+    <ul>
+        <li class="active">Home</li>
+        <li>About</li>
+        <li>Contact</li>
+    </ul>
+    <article data-author="john">
+        <p class="highlighted">Lorem ipsum...</p>
+        <p>Dolor sit amet...</p>
+    </article>
+</div>
+```
+
+## 1. Attribute Selectors
+
+**1.1 Select Elements with Specific Attributes**
+
+This selects elements with a specified attribute.
+
+```javascript
+let elements = document.querySelectorAll('[data-author]');
+// selects <article data-author="john">
+```
+
+**1.2 Select Elements with Specific Attribute Values**
+
+This selects elements with a specified attribute value.
+
+```javascript
+let elements = document.querySelectorAll('[data-author="john"]');
+// selects <article data-author="john">
+```
+
+**1.3 Select Elements with Attribute Values Starting with a Specific String**
+
+This selects elements where the specified attribute value starts with a specified string.
+
+```javascript
+let elements = document.querySelectorAll('[data-author^="j"]');
+// selects <article data-author="john">
+```
+
+**1.4 Select Elements with Attribute Values Ending with a Specific String**
+
+This selects elements where the specified attribute value ends with a specified string.
+
+```javascript
+let elements = document.querySelectorAll('[data-author$="hn"]');
+// selects <article data-author="john">
+```
+
+**1.5 Select Elements with Attribute Values Containing a Specific Substring**
+
+This selects elements where the specified attribute value contains a specified substring.
+
+```javascript
+let elements = document.querySelectorAll('[data-author*="oh"]');
+// selects <article data-author="john">
+```
+
+**1.6 Select Elements with Multiple Attributes**
+
+You can chain multiple attribute selectors together to select elements that match all conditions:
+
+```javascript
+document.querySelectorAll('[attribute1][attribute2]')
+```
+
+Example:
+```javascript
+document.querySelectorAll('[type="checkbox"][checked]')
+```
+This will select all checked checkboxes.
+
+**1.7 Select Elements Without a Specific Attribute**
+
+You can select elements that do not have a specific attribute using the `:not()` pseudo-class:
+
+```javascript
+document.querySelectorAll(':not([attribute])')
+```
+
+Example:
+```javascript
+document.querySelectorAll(':not([disabled])')
+```
+This will select all elements that do not have the `disabled` attribute.
+
+**1.8 Selecting Elements with Complex Queries**
+
+Here's an example that selects a very specific subset of elements:
+
+```javascript
+document.querySelectorAll('div[data-user]:not([disabled]):not([class="admin"]) a[href*="https"]')
+```
+
+Remember, while this selector is extremely specific, it also has potential to be quite expensive performance-wise on larger DOMs due to its complexity. Always consider the performance implications when using complex selectors.
+
+## 2. Pseudo-Classes
+
+**2.1 Select the First Child of Every Element of a Type**
+
+```javascript
+let firstChildElements = document.querySelectorAll('li:first-child');
+// selects <li class="active">Home</li>
+```
+
+**2.2 Select the Last Child of Every Element of a Type**
+
+```javascript
+let lastChildElements = document.querySelectorAll('li:last-child');
+// selects <li>Contact</li>
+```
+
+**2.3 Select Every nth Child of Every Element of a Type**
+
+```javascript
+let nthChildElements = document.querySelectorAll('li:nth-child(2)');
+// selects <li>About</li>
+```
+
+**2.4 Select Elements That are the Only Child of Their Parent**
+
+```javascript
+let onlyChildElements = document.querySelectorAll('p:only-child');
+//
+
+ selects none
+```
+
+**2.5 Select Elements That are the Only Element of Their Type**
+
+```javascript
+let onlyOfTypeElements = document.querySelectorAll('ul:only-of-type');
+// selects <ul>...</ul>
+```
+
+**2.6 Select Elements That are Currently in Focus**
+
+```javascript
+let focusedElements = document.querySelectorAll(':focus');
+// selects none
+```
+
+**2.7 Select Elements That are Currently Hovered Over**
+
+```javascript
+let hoveredElements = document.querySelectorAll(':hover');
+// selects none
+```
+
+**2.8 Select Elements That are Currently Active**
+
+```javascript
+let activeElements = document.querySelectorAll(':active');
+// selects none
+```
+
+**2.9 Select Checked Elements**
+
+```javascript
+let checkedElements = document.querySelectorAll(':checked');
+// selects none
+```
+
+## 3. Combining Selectors
+
+**3.1 Select All Paragraphs Inside Divs**
+
+```javascript
+let paragraphsInDivs = document.querySelectorAll('div p');
+// selects <p class="highlighted">Lorem ipsum...</p>
+ and <p>Dolor sit amet...</p>
+```
+
+**3.2 Select All Elements with a Specific Class Inside Elements with a Different Specific Class**
+
+```javascript
+let elements = document.querySelectorAll('.active ~ li');
+// selects <li>About</li> and <li>Contact</li>
+```
+
+**3.3 Select All Direct Children of an Element with a Specific Class**
+
+```javascript
+let directChildren = document.querySelectorAll('ul > .active');
+// selects <li class="active">Home</li>
+```
+
+**3.4 Select All Elements with a Specific Class that Follow After Elements with a Different Specific Class**
+
+```javascript
+let elements = document.querySelectorAll('.active + li');
+// selects <li>About</li>
+```
+
+Please note that some selections in the code examples, like `:hover`, `:focus`, and `:active`, are based on the user's interactions with the page and may not return any elements if none are in the corresponding state at the moment the command is run.

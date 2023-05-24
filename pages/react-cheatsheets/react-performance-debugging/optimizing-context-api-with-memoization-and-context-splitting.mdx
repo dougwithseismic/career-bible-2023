@@ -1,0 +1,126 @@
+# Cheatsheet: Optimizing Context API with Memoization and Context Splitting
+
+Feeling the heat from all those unnecessary re-renders due to React's Context API? Well, you're not alone. This cheatsheet will guide you through how you can optimize Context API using memoization and context splitting. 
+
+Let's head back to our favorite case study, the ever-entertaining online shopping cart, and see how we can make this baby purr.
+
+## Online Shopping Cart - Case Study
+
+Take a gander at this context provider for our cart. We've got our cart state and a couple of handy-dandy actions like adding and removing items from the cart. 
+
+**CartContext.js**
+```jsx
+import React, { createContext, useReducer } from 'react';
+import cartReducer from './cartReducer';
+
+const CartContext = createContext();
+
+const CartProvider = ({ children }) => {
+  const [cart, dispatch] = useReducer(cartReducer, []);
+
+  const addToCart = (item) => {
+    dispatch({ type: 'ADD_ITEM', item });
+  };
+
+  // ...
+
+  return (
+    <CartContext.Provider value={{ cart, addToCart }}>
+      {children}
+    </CartContext.Provider>
+  );
+};
+```
+
+## The Problem - Unwanted Guests (aka Unnecessary Re-Renders)
+
+Any component that pulls up a chair to the `CartContext` table will re-render when the cart state changes. But what about the components that only need the actions, like `addToCart`, and couldn't care less about the state? Yep, you guessed it, they're still forced to re-render when the cart state changes.
+
+**AddToCartButton.js**
+```jsx
+import React, { useContext } from 'react';
+import { CartContext } from './CartContext';
+
+const AddToCartButton = ({ item }) => {
+  const { addToCart } = useContext(CartContext);
+  return <button onClick={() => addToCart(item)}>Add to Cart</button>;
+};
+```
+
+Our `AddToCartButton` above only needs the `addToCart` function and not the `cart` state. But alas, it still re-renders whenever the cart changes since it's chowing down at the `CartContext`.
+
+## The Solution - Memoization and Context Splitting
+
+### Memoization
+
+We'll use React's built-in `useMemo` hook for memoizing the context value, which will prevent unnecessary re-renders.
+
+**Updated CartContext.js**
+```jsx
+import React, { createContext, useReducer, useMemo } from 'react';
+import cartReducer from './cartReducer';
+
+const CartContext = createContext();
+
+const CartProvider = ({ children }) => {
+  const [cart, dispatch] = useReducer(cartReducer, []);
+
+  const addToCart = (item) => {
+    dispatch({ type: 'ADD_ITEM', item });
+  };
+
+  const value = useMemo(() => ({ cart, addToCart }), [cart]);
+
+  return <CartContext.Provider value={value}>{children}</CartContext.Provider>;
+};
+```
+
+### Context Splitting
+
+Another approach we can leverage is to split our context into two: a `CartStateContext` for the state and a `CartDispatchContext` for the actions. 
+
+**SplitCartContext.js**
+```jsx
+import React, { createContext, useReducer } from 'react';
+import cartReducer from './cartReducer';
+
+const CartStateContext = createContext();
+const CartDispatchContext = createContext();
+
+const CartProvider = ({ children }) => {
+  const [cart, dispatch] = useReducer(cartReducer, []);
+
+  const addToCart = (item) => {
+    dispatch({ type: 'ADD_ITEM', item });
+  };
+
+  // ...
+
+  return (
+    <CartStateContext.Provider value={cart}>
+      <Cart
+
+DispatchContext.Provider value={addToCart}>
+        {children}
+      </CartDispatchContext.Provider>
+    </CartStateContext.Provider>
+  );
+};
+```
+
+With this setup, our `AddToCartButton` can tap into the `CartDispatchContext` only and will no longer re-render when the cart state changes.
+
+**Updated AddToCartButton.js**
+```jsx
+import React, { useContext } from 'react';
+import { CartDispatchContext } from './SplitCartContext';
+
+const AddToCartButton = ({ item }) => {
+  const addToCart = useContext(CartDispatchContext);
+  return <button onClick={() => addToCart(item)}>Add to Cart</button>;
+};
+```
+
+## In Conclusion
+
+Both memoization and context splitting are fantastic solutions to optimize our app performance by curtailing unnecessary re-renders. It's all about using Context API for global state management without having to break a sweat over performance issues. Happy coding, amigo!

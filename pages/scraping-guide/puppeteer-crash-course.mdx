@@ -1,0 +1,203 @@
+# Advanced Cheatsheet: Puppeteer for Web Scraping
+
+Puppeteer is a Node library that provides a high-level API to control Chrome or Chromium over the DevTools Protocol. It can generate screenshots and PDFs of pages, crawl Single-Page Applications, and so on. But in this cheatsheet, we'll focus on using Puppeteer for web scraping. This requires a good understanding of Promises and async/await as Puppeteer is built on these concepts.
+
+## 1. Setup and Navigation
+To start, install Puppeteer using npm:
+
+```
+npm install puppeteer
+```
+
+Here is how you initialize Puppeteer and navigate to a page:
+
+```javascript
+const puppeteer = require('puppeteer');
+
+async function run() {
+    const browser = await puppeteer.launch();
+    const page = await browser.newPage();
+    await page.goto('http://example.com');
+    // Further actions...
+    await browser.close();
+}
+
+run();
+```
+
+## 2. Waiting for Elements
+
+Sometimes, the elements you want to scrape might not be immediately available when the page loads. In such cases, Puppeteer provides several methods to wait for elements:
+
+```javascript
+// Wait for an element matching selector to appear in DOM. Fails if waiting time exceeds `timeout`.
+await page.waitForSelector('#selector');
+
+// Wait for an element with a certain XPath to appear in DOM. Fails if waiting time exceeds `timeout`.
+await page.waitForXPath('XPath');
+
+// Wait for a function to be true. Useful for checking conditions on page load. Fails if waiting time exceeds `timeout`.
+await page.waitForFunction(() => window.status === 'ready');
+```
+
+## 3. Using Mutation Observers
+
+If you need to wait for certain changes in the DOM structure (like the addition or removal of elements), you can use Mutation Observers:
+
+```javascript
+await page.evaluate(() => {
+    new MutationObserver((mutations, observer) => {
+        for(let mutation of mutations) {
+            if (mutation.type === 'childList') {
+                observer.disconnect();
+                window.MUTATION_OBSERVER_MUTATED = true;
+            }
+        }
+    }).observe(document.body, { childList: true });
+});
+await page.waitForFunction(() => window.MUTATION_OBSERVER_MUTATED);
+```
+
+## 4. Evaluating Functions in Page Context
+
+You can use `page.evaluate()` to evaluate a function in the page context:
+
+```javascript
+let data = await page.evaluate(() => {
+    let elements = Array.from(document.querySelectorAll('.selector'));
+    return elements.map(el => el.textContent);
+});
+```
+
+Remember that you cannot directly reference variables defined in your Puppeteer script inside of `page.evaluate()`. This function gets serialized and then evaluated in the browser context, so it does not have access to the Puppeteer scope.
+
+## 5. Common Gotchas
+
+- **Navigation Timeout**: Puppeteer uses a default navigation timeout of 30 seconds. If a page takes longer than that to load, you'll get a timeout error. You can adjust this timeout using `page.setDefaultNavigationTimeout(time)` or `page.goto(url, { timeout: time })`.
+
+- **Non-Serializable Data**: `page.evaluate()` can only return serializable data (essentially, the data that can be JSON.stringified). If you try to return a function, a DOM element, or a complex object like a Map or Set, you'll run into errors.
+
+- **Error Handling**: Many Puppeteer operations can fail, so it's important to handle errors appropriately. This usually means wrapping your code in try/catch blocks and handling any exceptions that might occur.
+
+- **Closing the Browser**: Always make sure to close the browser by calling `browser.close()`. Not doing so might leave hanging Chromium instances and can consume a lot of
+
+ resources.
+
+- **Working with SPA**: When working with Single Page Applications, be aware that they might take a while to load all the data. Ensure to wait for all the elements you want to interact with or scrape.
+
+## 6. Interacting with the Page: Inputs, Clicks, and Looking Human
+
+Puppeteer gives you full control over Chrome's input events, meaning you can simulate typing, clicking buttons, scrolling, and other user interactions with a webpage.
+
+**Typing into Inputs**
+
+Here's how you can type into an input field:
+
+```javascript
+await page.type('#myinput', 'Hello World');
+```
+
+The `page.type()` method types at about 100 characters per second, but you can slow this down to simulate a real user:
+
+```javascript
+await page.type('#myinput', 'Hello World', { delay: 100 }); // Types slower, like a human
+```
+
+**Clicking Buttons**
+
+Clicking buttons or any other element is also straightforward:
+
+```javascript
+await page.click('#mybutton'); // Clicks a button
+```
+
+**Scrolling**
+
+Simulating scroll can be a bit tricky as Puppeteer doesn't have a built-in method for it, but you can do it inside `page.evaluate()`:
+
+```javascript
+await page.evaluate(() => {
+    window.scrollBy(0, window.innerHeight);
+});
+```
+
+**Looking Human**
+
+To make your bot look more like a human, you can:
+
+1. **Randomize the typing speed**. Humans don't type at a constant speed, so add some randomness to your delays:
+
+```javascript
+const delay = Math.floor(Math.random() * 100) + 50; // Random delay between 50 and 150 ms
+await page.type('#myinput', 'Hello World', { delay: delay });
+```
+
+2. **Move the mouse**. Puppeteer can also simulate mouse movements:
+
+```javascript
+await page.mouse.move(0, 0);
+await page.mouse.move(100, 100);
+```
+
+3. **Simulate "reading"**. If you're scraping a page, don't do it instantly. Instead, wait for a few seconds before and after you "read" the content:
+
+```javascript
+await page.waitForTimeout(2000 + Math.floor(Math.random() * 1000)); // Wait 2-3 seconds
+const content = await page.content();
+await page.waitForTimeout(2000 + Math.floor(Math.random() * 1000)); // Wait 2-3 seconds
+```
+
+These strategies will make your bot look more like a human user. However, always respect websites' terms of service and robots.txt files when scraping.
+
+## 7. Staying Under The Radar: Proxy, Stealth, and More
+
+When you're scraping, it's crucial to not get caught. There are several ways to ensure your Puppeteer instances remain undetected.
+
+**Proxies**
+
+One way to mask your bot's IP is to use a proxy:
+
+```javascript
+const puppeteer = require('puppeteer');
+
+const proxyUrl = 'http://proxy_IP:proxy_port';
+const browser = await puppeteer.launch({
+    args: [ `--proxy-server=${proxyUrl}` ],
+});
+```
+
+This way, all the requests made by the Puppeteer instance will be made through the proxy.
+
+**Puppeteer Extra Stealth**
+
+Puppeteer-extra-stealth is a plugin that applies various evasion techniques to make detection of headless Chrome harder:
+
+```javascript
+const puppeteer = require('puppeteer-extra');
+const StealthPlugin = require('puppeteer-extra-plugin-stealth');
+
+puppeteer.use(StealthPlugin());
+
+const browser = await puppeteer.launch({ headless: true });
+```
+
+**Randomizing User Agents**
+
+Changing the user agent of your Puppeteer instance can also make detection harder:
+
+```javascript
+const userAgent = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/58.0.3029.110 Safari/537';
+await page.setUserAgent(userAgent);
+```
+
+Remember to use an up-to-date user agent and avoid known headless user agents.
+
+**Disabling JavaScript**
+
+Some websites use JavaScript to detect headless browsers. If the site you're scraping works without JavaScript, you can disable JavaScript in Puppeteer:
+
+```javascript
+await page.setJavaScriptEnabled(false);
+```
+
+Keep in mind that these methods aren't perfect and some websites may still be able to detect your Puppeteer instances. Always respect websites' terms of service and robots.txt files when scraping.

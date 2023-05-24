@@ -1,0 +1,76 @@
+# Understanding Dynamic Imports in Next.js: The React.lazy Alternative
+
+In this cheat sheet, we're going to dive into the `next/dynamic` function, a built-in tool in Next.js that's an alternative to `React.lazy` for dynamic imports. This function allows us to import JavaScript modules in a lazy-load manner, improving initial load times.
+
+```jsx
+// Filename: pages/index.js
+import dynamic from 'next/dynamic'
+
+const DynamicComponent = dynamic(() => import('../components/DynamicComponent'))
+
+function HomePage() {
+  return (
+    <div>
+      <DynamicComponent />
+    </div>
+  )
+}
+
+export default HomePage
+```
+
+In this example, `DynamicComponent` is imported dynamically. This means that it will only be loaded when the `HomePage` component is rendered, not before. A typical import would include the component in the main bundle, which would be loaded immediately, regardless of whether the component is used or not.
+
+## Server-Side Rendering and Next.js Dynamic Imports
+
+What sets `next/dynamic` apart from `React.lazy` is its compatibility with server-side rendering (SSR). Here's how you can dynamically import a component that requires SSR:
+
+```jsx
+// Filename: pages/index.js
+import dynamic from 'next/dynamic'
+
+const DynamicComponent = dynamic(() => import('../components/DynamicComponent'), {
+  ssr: true,
+})
+
+function HomePage() {
+  return (
+    <div>
+      <DynamicComponent />
+    </div>
+  )
+}
+
+export default HomePage
+```
+
+With `ssr: true`, Next.js will server-render the `DynamicComponent`.
+
+## Loading Modules with Dependencies
+
+`next/dynamic` also supports loading modules with dependencies. Let's say the `DynamicComponent` depends on a `utils.js` module. Here's how you'd handle that:
+
+```jsx
+// Filename: pages/index.js
+import dynamic from 'next/dynamic'
+
+const DynamicComponent = dynamic(() => Promise.all([
+  import('../components/DynamicComponent'),
+  import('../utils/utils.js')
+]).then(([module, utils]) => {
+  // Modify the module component or bind utilities here if needed
+  return module;
+}))
+
+function HomePage() {
+  return (
+    <div>
+      <DynamicComponent />
+    </div>
+  )
+}
+
+export default HomePage
+```
+
+In summary, while `React.lazy` and `next/dynamic` both provide dynamic imports and code-splitting, `next/dynamic` comes with extra features tailored for Next.js applications, including server-side rendering support. Therefore, when working with Next.js, `next/dynamic` should be your go-to tool for dynamic imports and lazy loading of components.

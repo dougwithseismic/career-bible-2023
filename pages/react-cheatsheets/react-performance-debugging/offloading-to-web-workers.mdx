@@ -1,0 +1,73 @@
+# Cheatsheet: Offloading to Web Workers in TypeScript and React
+
+Alright, mate! Ever had a scenario where your React app's doing so many number crunches it's behaving like an overworked accountant during tax season? It's time to call in some extra help with Web Workers. Let's dive in and free up that main thread, shall we?
+
+## The Issue at Hand - Congested Main Thread
+
+If you're asking your main thread to do all the work, it's bound to get overwhelmed at some point. Too many computations can lead to a janky, unresponsive UI, and nobody wants that. 
+
+Let's take a gander at this number-crunching component for our online shop. You've got a function `findBestDeal` that sifts through all your products to find the best deal based on some complex calculations.
+
+**BestDeal.tsx**
+```typescript
+import React from 'react';
+
+const findBestDeal = (products: Array<Product>) => {
+  // Some heavy computations...
+};
+
+const BestDeal = ({ products }: { products: Array<Product> }) => {
+  const bestDeal = findBestDeal(products);
+
+  return <div>Best deal: {bestDeal.name}</div>;
+};
+
+export default BestDeal;
+```
+
+## The Calvary - Web Workers
+
+Web Workers to the rescue! They're like your own personal assistants, taking on those heavy tasks and leaving your main thread free to focus on user interactions.
+
+Let's create a new worker file that will take care of finding the best deal.
+
+**bestDealWorker.ts**
+```typescript
+self.onmessage = (event) => {
+  const products = event.data;
+  // Compute the best deal here...
+
+  self.postMessage(bestDeal);
+};
+```
+
+## Integrating Web Workers with React
+
+Here's how we can put our new worker to work in the `BestDeal` component.
+
+**BestDeal.tsx**
+```typescript
+import React, { useEffect, useState } from 'react';
+import Worker from './bestDealWorker';
+
+const BestDeal = ({ products }: { products: Array<Product> }) => {
+  const [bestDeal, setBestDeal] = useState<Product | null>(null);
+  const worker = new Worker();
+
+  useEffect(() => {
+    worker.postMessage(products);
+    worker.onmessage = (event) => setBestDeal(event.data);
+    return () => worker.terminate();
+  }, [products]);
+
+  return <div>Best deal: {bestDeal ? bestDeal.name : 'Calculating...'}</div>;
+};
+
+export default BestDeal;
+```
+
+## The Lowdown
+
+Just like that, you've handed off the hard graft to a Web Worker. The UI stays responsive because your main thread is as free as a bird, and the computations are handled in the background.
+
+Web Workers aren't a silver bullet and might not be the right fit for every scenario. They come with a little bit of extra complexity and some restrictions (like no DOM access), but when you're dealing with heavy computations, they're a great tool to have in your toolkit. You're a badass, now.
