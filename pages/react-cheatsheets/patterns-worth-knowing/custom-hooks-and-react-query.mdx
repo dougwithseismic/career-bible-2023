@@ -1,0 +1,108 @@
+To provide an entire project setup for using `react-query`, we'll create a simple React project using `create-react-app` and then install `react-query`. Here's a step-by-step guide:
+
+First, make sure you have Node.js installed on your machine. If you haven't installed Node.js, you can download it from the official website: https://nodejs.org/en/
+After installing Node.js, you can use the `npx` command (which comes with Node.js) to create a new React application.
+
+1. Create a new React application:
+
+```bash
+npx create-react-app my-app
+```
+
+2. Once your new application is created, navigate into the project directory:
+
+```bash
+cd my-app
+```
+
+3. Now, you can install `react-query` in your application:
+
+```bash
+npm install react-query
+```
+
+4. Now, you have a basic React application set up with `react-query`. You can start the application by running:
+
+```bash
+npm start
+```
+
+Your application should now be running at `http://localhost:3000/`.
+
+To use `react-query` in your application, you will need to set up a `QueryClient` and provide it using `QueryClientProvider`. You can do this in your `index.js` file:
+
+```jsx
+import React from "react";
+import ReactDOM from "react-dom";
+import { QueryClient, QueryClientProvider } from "react-query";
+import App from "./App";
+
+const queryClient = new QueryClient();
+
+ReactDOM.render(
+  <React.StrictMode>
+    <QueryClientProvider client={queryClient}>
+      <App />
+    </QueryClientProvider>
+  </React.StrictMode>,
+  document.getElementById("root")
+);
+```
+
+```tsx
+// hooks/useCustomQuery.ts
+import { useQuery } from "react-query";
+
+/**
+ * Function to fetch data. This would typically be your API call.
+ * @param {string} url The url to fetch data from.
+ */
+async function fetchData(url: string) {
+  const response = await fetch(url);
+
+  if (!response.ok) {
+    throw new Error("Network response was not ok");
+  }
+
+  return response.json();
+}
+
+/**
+ * Custom hook that wraps the useQuery hook from react-query.
+ * @param {string} url The url to fetch data from.
+ */
+export function useCustomQuery(url: string) {
+  return useQuery(url, () => fetchData(url));
+}
+```
+
+Now, within your components, you can use the custom hook `useCustomQuery` that we defined earlier. Here's an example of a component that fetches data from an API using `useCustomQuery`:
+
+```jsx
+import React from "react";
+import { useCustomQuery } from "./hooks/useCustomQuery";
+
+export function MyComponent() {
+  const { data, isLoading, error } = useCustomQuery(
+    "https://api.example.com/data"
+  );
+
+  if (isLoading) {
+    return <div>Loading...</div>;
+  }
+
+  if (error) {
+    return <div>Error: {error.message}</div>;
+  }
+
+  return (
+    <div>
+      <h1>My Data</h1>
+      {/* Render your data here */}
+      {data && data.map((item) => <div key={item.id}>{item.name}</div>)}
+    </div>
+  );
+}
+```
+
+This setup is a very basic example. Depending on your application, you might want to customize this further, add routing (with `react-router` for example), state management, etc. You can refer to the `react-query` documentation for more advanced usage: https://react-query.tanstack.com/overview.
