@@ -704,7 +704,11 @@ const useApiRequest = <T,>({
 };
 ```
 
-### example
+### Examples
+
+Now that we have our hook, let's see how we can use it in our components -
+
+#### `GET` Request
 
 ```tsx
 // Usage of useApiRequest with User type
@@ -725,6 +729,30 @@ const DisplayUsers = () => {
     });
 
   // ... use the userData, setUserData, setParameters, isLoading, error in your component
+};
+```
+
+#### `POST` Request
+
+```tsx
+// Example data type for a POST request
+interface PostData {
+  title: string;
+  body: string;
+  userId: number;
+}
+
+// Example component
+const ExampleComponent = () => {
+  const [postData, setPostData, setParameters, isLoading, error] =
+    useApiRequest<PostData>({
+      initialData: { title: "foo", body: "bar", userId: 1 }, // The body of the POST request
+      requestType: "POST",
+      url: "/api/posts",
+      delay: 1000,
+    });
+
+  // ... use postData, setPostData, setParameters, isLoading, error in your component
 };
 ```
 
