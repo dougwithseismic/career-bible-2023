@@ -608,70 +608,121 @@ And finally, let's do a final refactoring to clear up the code, add an isLoading
 
 - **Updated Hook Return Values:** Lastly, we updated the return values of the hook to include the new state variables `isLoading` and `error`. This allows the component using the hook to access and handle the loading status and any errors.
 
-```jsx
+```tsx
 import { useState, useEffect, useCallback, useRef } from "react";
-import axios from "axios";
+import axios, { AxiosResponse } from "axios";
 
-const useApiRequest = (
+// Generic Request Config interface
+interface RequestConfig<T> {
+  initialData: T;
+  requestType: "GET" | "POST" | "PUT" | "DELETE";
+  url: string;
+  initialParameters?: T;
+  delay: number;
+}
+
+// Generic return type of useApiRequest
+type UseApiRequestReturn<T> = [
+  data: T,
+  setData: React.Dispatch<React.SetStateAction<T>>,
+  setParameters: React.Dispatch<React.SetStateAction<T>>,
+  isLoading: boolean,
+  error: Error | null
+];
+
+// Generic performRequest function
+const performRequest = async <T,>(
+  requestType: "GET" | "POST" | "PUT" | "DELETE",
+  url: string,
+  parameters: T,
+  data: T
+): Promise<AxiosResponse<T>> => {
+  switch (requestType) {
+    case "GET":
+      return await axios.get<T>(url, { params: parameters });
+    case "POST":
+      return await axios.post<T>(url, data);
+    case "PUT":
+      return await axios.put<T>(url, data);
+    case "DELETE":
+      return await axios.delete<T>(url);
+    default:
+      throw new Error("Invalid request type");
+  }
+};
+
+// Generic useApiRequest hook
+const useApiRequest = <T,>({
   initialData,
   requestType,
-  path,
-  initialParams,
-  delay
-) => {
-  const [data, setData] = useState(initialData);
-  const [params, setParams] = useState(initialParams);
-  const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState(null);
-  const prevDataRef = useRef(data);
-  const prevParamsRef = useRef(params);
+  url,
+  initialParameters = {} as T,
+  delay,
+}: RequestConfig<T>): UseApiRequestReturn<T> => {
+  const [data, setData] = useState<T>(initialData);
+  const [parameters, setParameters] = useState<T>(initialParameters);
+  const [isLoading, setIsLoading] = useState<boolean>(false);
+  const [error, setError] = useState<Error | null>(null);
 
-  const apiRequest = useCallback(async () => {
+  const previousData = useRef<T>(data);
+  const previousParameters = useRef<T>(parameters);
+
+  const executeApiRequest = useCallback(async () => {
     if (
-      JSON.stringify(prevDataRef.current) !== JSON.stringify(data) ||
-      JSON.stringify(prevParamsRef.current) !== JSON.stringify(params)
+      JSON.stringify(previousData.current) !== JSON.stringify(data) ||
+      JSON.stringify(previousParameters.current) !== JSON.stringify(parameters)
     ) {
       setIsLoading(true);
       setError(null);
 
       try {
-        let response;
-        switch (requestType) {
-          case "GET":
-            response = await axios.get(path, { params });
-            break;
-          case "POST":
-            response = await axios.post(path, data);
-            break;
-          case "PUT":
-            response = await axios.put(path, data);
-            break;
-          case "DELETE":
-            response = await axios.delete(path);
-            break;
-          default:
-            throw new Error("Invalid request type");
-        }
+        const response = await performRequest<T>(
+          requestType,
+          url,
+          parameters,
+          data
+        );
         setData(response.data);
-        prevDataRef.current = data;
-        prevParamsRef.current = params;
-      } catch (err) {
-        setError(err);
+        previousData.current = data;
+        previousParameters.current = parameters;
+      } catch (error) {
+        setError(error);
       } finally {
         setIsLoading(false);
       }
     }
-  }, [data, requestType, path, params]);
+  }, [data, requestType, url, parameters]);
 
   useEffect(() => {
-    const timerId = setTimeout(apiRequest, delay);
+    const timerId = setTimeout(executeApiRequest, delay);
+    return () => clearTimeout(timerId);
+  }, [executeApiRequest, delay]);
 
-    return () => {
-      clearTimeout(timerId);
-    };
-  }, [apiRequest, delay]);
+  return [data, setData, setParameters, isLoading, error];
+};
+```
 
-  return [data, setData, setParams, isLoading, error];
+### example
+
+```tsx
+// Usage of useApiRequest with User type
+// User data type
+interface User {
+  name: string;
+  age: number;
+  email: string;
+}
+
+const DisplayUsers = () => {
+  const [userData, setUserData, setParameters, isLoading, error] =
+    useApiRequest<User>({
+      initialData: { name: "", age: 0, email: "" },
+      requestType: "GET",
+      url: "/api/user",
+      delay: 1000,
+    });
+
+  // ... use the userData, setUserData, setParameters, isLoading, error in your component
 };
 ```
 
