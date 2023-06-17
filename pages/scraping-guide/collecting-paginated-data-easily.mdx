@@ -1,0 +1,70 @@
+```tsx
+import axios from 'axios';
+
+interface Todo {
+  id: number;
+  userId: number;
+  title: string;
+  completed: boolean;
+}
+
+interface PaginationParams {
+  pageQueryParam: string;
+}
+
+type AggregatorCallback = (data: Todo[], aggregatedData: Todo[]) => Todo[];
+
+async function fetchAllData(
+  url: string,
+  paginationParams: PaginationParams,
+  aggregator: AggregatorCallback
+): Promise<Todo[]> {
+  const { pageQueryParam } = paginationParams;
+  let currentPage = 1;
+  let aggregatedData: Todo[] = [];
+
+  try {
+    while (true) {
+      const response = await axios.get<Todo[]>(url, {
+        params: {
+          [pageQueryParam]: currentPage,
+        },
+      });
+
+      const { data } = response;
+      aggregatedData = aggregator(data, aggregatedData);
+
+      if (data.length === 0) {
+        // No more data available, exit the loop
+        break;
+      }
+
+      currentPage++;
+    }
+
+    return aggregatedData;
+  } catch (error) {
+    console.error('An error occurred:', error);
+    throw error;
+  }
+}
+
+// Example aggregator callback that concatenates the fetched todos
+const concatenateAggregator: AggregatorCallback = (data, aggregatedData) => {
+  return aggregatedData.concat(data);
+};
+
+// Example usage with the Todos API
+const url = 'https://jsonplaceholder.typicode.com/todos';
+const paginationParams = {
+  pageQueryParam: '_page',
+};
+
+fetchAllData(url, paginationParams, concatenateAggregator)
+  .then((todos) => {
+    console.log('Aggregated todos:', todos);
+  })
+  .catch((error) => {
+    console.error('Error:', error);
+  });
+  ```
