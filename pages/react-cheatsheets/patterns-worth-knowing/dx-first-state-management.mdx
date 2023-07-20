@@ -1,201 +1,94 @@
-# Phenomenal DX with React Context and Immer
+# Readme.md
 
-Effortlessly manage deeply nested state in React with a combination of Context and Immer. It's simple, intuitive, and incredibly powerful.
+---
 
-## Introduction
+## **ImmerFluent**: _A Seamless State Management Technique in React_
 
-React's Context API is powerful. Immer makes immutability a breeze. Together? They make state management feel like magic. I'm not saying use this over `react-query`, `zustand`, `jotai` etc but if you're after a type-safe, simple, and intuitive way to manage your state using native React API, this is for you.
+Managing state in React can sometimes get messy, especially when dealing with nested state objects. ImmerFluent provides a smoother way to manage state using immer under the hood, but with a more straightforward interface. The key feature is that it allows you to set the state either directly or using a function, and offers an optional overwrite behavior.
 
-Imagine a world where managing and updating deeply nested global state without breaking everything else is as simple as:
+### **Usage**:
 
-```typescript
-const { state, setState } = useSiteContext();
+1. **Directly Setting State**:
 
-const handleUpdate = () => {
-  setState({
-    name: "Updated name",
-    deeply: {
-      nested: { thing: { value: "updated value" } },
-    },
-  });
-};
+   This is the most straightforward way to set the state. You provide the new state values directly.
 
-// or
-// ...
-setState((draft) => {
-  eply.nested.key.value = `updated value for ${siteName}`;
-  draft.another.value = "another value";
-});
-```
+   ```javascript
+   const handleDirectSetState = (): void => {
+       setState({
+           name: generateRandomName(),
+           deeply: {
+               nested: { first: Math.random() * 100, second: state.deeply.nested.second + 1 },
+           },
+       });
+   }
+   ```
 
-const { siteName } = draft;
+2. **Directly Setting State with Overwrite**:
 
-draft.de
+   This approach allows you to overwrite the entire state object with the values provided.
 
-## Why is this exciting?
+   ```javascript
+   const handleDirectSetStateWithOverwrite = (): void => {
+       setState(
+           {
+               name: generateRandomName(),
+               deeply: {
+                   nested: { first: Math.random() * 100, second: state.deeply.nested.second + 1 },
+               },
+           },
+           { overwrite: true }
+       );
+   }
+   ```
 
-Deeply nested states can be a pain to update. With this setup, you can perform updates on nested state objects with ease, without worrying about mutating the original state or dealing with cumbersome object spreading. It uses Immer to do some magic and wrap a reducer pattern in a simple `setState` function that feels like an upgrade on the native `useState` method.
+3. **Functionally Setting State**:
 
-## How to Use
+   This method gives you a draft state to work with, and you can directly modify this draft. Changes to the draft will be used to produce the new state.
 
-### Direct Update
+   ```javascript
+   const handleFunctionalSetState = (): void => {
+       setState((draft) => {
+           draft.shallowDate = new Date().toISOString();
+           draft.name = generateRandomName();
+           draft.deeply.nested.first += 1;
+       });
+   }
+   ```
 
-Want to directly set a deeply nested value? Easy.
+4. **Combining State Updates**:
 
-```typescript
-setState({ deeply: { nested: { thing: { value: "updated value" } } } });
-```
+   This method lets you combine multiple state updates in one go.
 
-### Functional Update
+   ```javascript
+   const handleCombinedSetState = (): void => {
+       setState((draft) => {
+           draft.deeply.nested.first += 3;
+           draft.deeply.nested.anotherCompletely.different.madeup.nest = {
+               date: new Date().toISOString(),
+           };
+       });
+   }
+   ```
 
-Or, use a function to dynamically compute the next state, especially useful when the next state depends on the current one:
+### **Installation**:
 
-```typescript
-setState((draft) => {
-  draft.deeply.nested.key.value = `updated value for ${draft.siteName}`;
-});
-```
+- Ensure you have the `use-immer` package installed.
+- Integrate the `SiteContext` and `SiteContextProvider` in your application.
+- Wrap your root component (or any other component subtree) with the `SiteContextProvider`.
 
-### Using Dispatch
+### **Example Component**:
 
-For more complex scenarios or when working with actions, use the `dispatch` function:
+Here's an example component showcasing how to use ImmerFluent:
 
-```typescript
-dispatch({
-  type: "SET_SITE_CONTEXT",
-  value: { deeply: { nested: { first: 111, second: 222 } } },
-});
-```
-
-## Live Example
-
-To showcase its ease of use, here's a simple component that displays the current state and provides buttons to manipulate it in various ways:
-
-```tsx
-import React from "react";
-import { useSiteContext } from "./path-to-your-context-file"; // Make sure to update the import path accordingly.
+```jsx
+import React from 'react';
+import { useSiteContext } from '@/context/SiteContext';
 
 function ExampleComponent() {
-  const { state, setState, dispatch } = useSiteContext();
-
-  const handleDirectSetState = () => {
-    setState({
-      deeply: {
-        nested: { first: 789, second: 101112 },
-      },
-    });
-  };
-
-  const handleFunctionalSetState = () => {
-    setState((draft) => {
-      draft.deeply.nested.first += 1;
-    });
-  };
-
-  const handleDispatchNewValue = () => {
-    dispatch({
-      type: "SET_SITE_CONTEXT",
-      value: { deeply: { nested: { first: 111, second: 222 } } },
-    });
-  };
-
-  const handleFunctionalDispatch = () => {
-    dispatch({
-      type: "SET_SITE_CONTEXT",
-      value: (draft) => {
-        draft.deeply.nested.second += 2;
-      },
-    });
-  };
-
-  const handleCombinedSetState = () => {
-    setState((draft) => {
-      draft.deeply.nested.first += 3;
-      draft.deeply.nested.second = 0;
-    });
-  };
-
-  const handleDeeplyNestedDispatch = () => {
-    dispatch({
-      type: "SET_SITE_CONTEXT",
-      value: { deeply: { nested: { first: state.deeply.nested.first * 2 } } },
-    });
-  };
-
-  return (
-    <div>
-      <pre>{JSON.stringify(state, null, 2)}</pre>
-
-      <pre>
-        {`
-setState({
-    deeply: {
-        nested: { first: 789, second: 101112 }
-    }
-});
-                `}
-      </pre>
-      <button onClick={handleDirectSetState}>Direct Set State</button>
-
-      <pre>
-        {`
-setState(draft => {
-    draft.deeply.nested.first += 1;
-});
-                `}
-      </pre>
-      <button onClick={handleFunctionalSetState}>Functional Set State</button>
-
-      <pre>
-        {`
-dispatch({
-    type: 'SET_SITE_CONTEXT',
-    value: { deeply: { nested: { first: 111, second: 222 } } }
-});
-                `}
-      </pre>
-      <button onClick={handleDispatchNewValue}>Dispatch New Value</button>
-
-      <pre>
-        {`
-dispatch({
-    type: 'SET_SITE_CONTEXT',
-    value: draft => {
-        draft.deeply.nested.second += 2;
-    }
-});
-                `}
-      </pre>
-      <button onClick={handleFunctionalDispatch}>Functional Dispatch</button>
-
-      <pre>
-        {`
-setState(draft => {
-    draft.deeply.nested.first += 3;
-    draft.deeply.nested.second = 0;
-});
-                `}
-      </pre>
-      <button onClick={handleCombinedSetState}>Combined Set State</button>
-
-      <pre>
-        {`
-dispatch({
-    type: 'SET_SITE_CONTEXT',
-    value: { deeply: { nested: { first: state.deeply.nested.first * 2 } } }
-});
-                `}
-      </pre>
-      <button onClick={handleDeeplyNestedDispatch}>
-        Deeply Nested Dispatch
-      </button>
-    </div>
-  );
+    const { state, setState, dispatch } = useSiteContext();
+    ... // Rest of the component code
 }
-
-export { ExampleComponent };
 ```
 
-## Wrapping Up
 
-Combine the power of React's Context API with Immer for an amazing developer experience. Simplify your state management, especially for deeply nested states, and spend more time building features rather than wrangling with state updates. Enjoy!
+With **ImmerFluent**, state management becomes more intuitive, and you can effortlessly manage complex state structures. Say goodbye to spread operators and deep clones, and embrace the simplicity and power of ImmerFluent.
