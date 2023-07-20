@@ -4,13 +4,37 @@ Effortlessly manage deeply nested state in React with a combination of Context a
 
 ## Introduction
 
-React's Context API is powerful. Immer makes immutability a breeze. Together? They make state management feel like magic.
+React's Context API is powerful. Immer makes immutability a breeze. Together? They make state management feel like magic. I'm not saying use this over `react-query`, `zustand`, `jotai` etc but if you're after a type-safe, simple, and intuitive way to manage your state using native React API, this is for you.
 
-Imagine a world where you no longer have to spread your state objects manually or ensure you're not mutating the state directly. With Immer, you just describe the changes you want, and it takes care of the rest.
+Imagine a world where managing and updating deeply nested global state without breaking everything else is as simple as:
+
+```typescript
+const { state, setState } = useSiteContext();
+
+const handleUpdate = () => {
+  setState({
+    name: "Updated name",
+    deeply: {
+      nested: { thing: { value: "updated value" } },
+    },
+  });
+};
+
+// or
+// ...
+setState((draft) => {
+  eply.nested.key.value = `updated value for ${siteName}`;
+  draft.another.value = "another value";
+});
+```
+
+const { siteName } = draft;
+
+draft.de
 
 ## Why is this exciting?
 
-Deeply nested states can be a pain to update. With this setup, you can perform updates on nested state objects with ease, without worrying about mutating the original state or dealing with cumbersome object spreading.
+Deeply nested states can be a pain to update. With this setup, you can perform updates on nested state objects with ease, without worrying about mutating the original state or dealing with cumbersome object spreading. It uses Immer to do some magic and wrap a reducer pattern in a simple `setState` function that feels like an upgrade on the native `useState` method.
 
 ## How to Use
 
