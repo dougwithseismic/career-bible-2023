@@ -1,0 +1,74 @@
+# Phenomenal DX with React Context and Immer
+
+Effortlessly manage deeply nested state in React with a combination of Context and Immer. It's simple, intuitive, and incredibly powerful.
+
+## Introduction
+
+React's Context API is powerful. Immer makes immutability a breeze. Together? They make state management feel like magic.
+
+Imagine a world where you no longer have to spread your state objects manually or ensure you're not mutating the state directly. With Immer, you just describe the changes you want, and it takes care of the rest.
+
+## Why is this exciting?
+
+Deeply nested states can be a pain to update. With this setup, you can perform updates on nested state objects with ease, without worrying about mutating the original state or dealing with cumbersome object spreading.
+
+## How to Use
+
+### Direct Update
+
+Want to directly set a deeply nested value? Easy.
+
+```typescript
+setState({ deeply: { nested: { thing: { value: "updated value" } } } });
+```
+
+### Functional Update
+
+Or, use a function to dynamically compute the next state, especially useful when the next state depends on the current one:
+
+```typescript
+setState((draft) => {
+  draft.deeply.nested.key.value = `updated value for ${draft.siteName}`;
+});
+```
+
+### Using Dispatch
+
+For more complex scenarios or when working with actions, use the `dispatch` function:
+
+```typescript
+dispatch({
+  type: "SET_SITE_CONTEXT",
+  value: { deeply: { nested: { first: 111, second: 222 } } },
+});
+```
+
+## Live Example
+
+To showcase its ease of use, here's a simple component that displays the current state and provides buttons to manipulate it in various ways:
+
+```tsx
+import React from "react";
+import { useSiteContext } from "./path-to-your-context-file"; // Adjust this import path.
+
+function ExampleComponent() {
+  const { state, setState, dispatch } = useSiteContext();
+
+  // ... (code for state update functions)
+
+  return (
+    <div>
+      <pre>{JSON.stringify(state, null, 2)}</pre>
+      <pre>{`setState({...`}</pre>
+      <button onClick={handleDirectSetState}>Direct Set State</button>
+      {/* ... (rest of the buttons and their corresponding code previews) */}
+    </div>
+  );
+}
+
+export { ExampleComponent };
+```
+
+## Wrapping Up
+
+Combine the power of React's Context API with Immer for an amazing developer experience. Simplify your state management, especially for deeply nested states, and spend more time building features rather than wrangling with state updates. Enjoy!
