@@ -49,19 +49,122 @@ To showcase its ease of use, here's a simple component that displays the current
 
 ```tsx
 import React from "react";
-import { useSiteContext } from "./path-to-your-context-file"; // Adjust this import path.
+import { useSiteContext } from "./path-to-your-context-file"; // Make sure to update the import path accordingly.
 
 function ExampleComponent() {
   const { state, setState, dispatch } = useSiteContext();
 
-  // ... (code for state update functions)
+  const handleDirectSetState = () => {
+    setState({
+      deeply: {
+        nested: { first: 789, second: 101112 },
+      },
+    });
+  };
+
+  const handleFunctionalSetState = () => {
+    setState((draft) => {
+      draft.deeply.nested.first += 1;
+    });
+  };
+
+  const handleDispatchNewValue = () => {
+    dispatch({
+      type: "SET_SITE_CONTEXT",
+      value: { deeply: { nested: { first: 111, second: 222 } } },
+    });
+  };
+
+  const handleFunctionalDispatch = () => {
+    dispatch({
+      type: "SET_SITE_CONTEXT",
+      value: (draft) => {
+        draft.deeply.nested.second += 2;
+      },
+    });
+  };
+
+  const handleCombinedSetState = () => {
+    setState((draft) => {
+      draft.deeply.nested.first += 3;
+      draft.deeply.nested.second = 0;
+    });
+  };
+
+  const handleDeeplyNestedDispatch = () => {
+    dispatch({
+      type: "SET_SITE_CONTEXT",
+      value: { deeply: { nested: { first: state.deeply.nested.first * 2 } } },
+    });
+  };
 
   return (
     <div>
       <pre>{JSON.stringify(state, null, 2)}</pre>
-      <pre>{`setState({...`}</pre>
+
+      <pre>
+        {`
+setState({
+    deeply: {
+        nested: { first: 789, second: 101112 }
+    }
+});
+                `}
+      </pre>
       <button onClick={handleDirectSetState}>Direct Set State</button>
-      {/* ... (rest of the buttons and their corresponding code previews) */}
+
+      <pre>
+        {`
+setState(draft => {
+    draft.deeply.nested.first += 1;
+});
+                `}
+      </pre>
+      <button onClick={handleFunctionalSetState}>Functional Set State</button>
+
+      <pre>
+        {`
+dispatch({
+    type: 'SET_SITE_CONTEXT',
+    value: { deeply: { nested: { first: 111, second: 222 } } }
+});
+                `}
+      </pre>
+      <button onClick={handleDispatchNewValue}>Dispatch New Value</button>
+
+      <pre>
+        {`
+dispatch({
+    type: 'SET_SITE_CONTEXT',
+    value: draft => {
+        draft.deeply.nested.second += 2;
+    }
+});
+                `}
+      </pre>
+      <button onClick={handleFunctionalDispatch}>Functional Dispatch</button>
+
+      <pre>
+        {`
+setState(draft => {
+    draft.deeply.nested.first += 3;
+    draft.deeply.nested.second = 0;
+});
+                `}
+      </pre>
+      <button onClick={handleCombinedSetState}>Combined Set State</button>
+
+      <pre>
+        {`
+dispatch({
+    type: 'SET_SITE_CONTEXT',
+    value: { deeply: { nested: { first: state.deeply.nested.first * 2 } } }
+});
+                `}
+      </pre>
+      <button onClick={handleDeeplyNestedDispatch}>
+        Deeply Nested Dispatch
+      </button>
     </div>
   );
 }
