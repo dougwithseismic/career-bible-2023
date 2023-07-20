@@ -14,13 +14,16 @@ Managing state in React can sometimes get messy, especially when dealing with ne
 
    ```javascript
    const handleDirectSetState = (): void => {
-       setState({
-           name: generateRandomName(),
-           deeply: {
-               nested: { first: Math.random() * 100, second: state.deeply.nested.second + 1 },
-           },
-       });
-   }
+     setState({
+       name: generateRandomName(),
+       deeply: {
+         nested: {
+           first: Math.random() * 100,
+           second: state.deeply.nested.second + 1,
+         },
+       },
+     });
+   };
    ```
 
 2. **Directly Setting State with Overwrite**:
@@ -29,16 +32,19 @@ Managing state in React can sometimes get messy, especially when dealing with ne
 
    ```javascript
    const handleDirectSetStateWithOverwrite = (): void => {
-       setState(
-           {
-               name: generateRandomName(),
-               deeply: {
-                   nested: { first: Math.random() * 100, second: state.deeply.nested.second + 1 },
-               },
+     setState(
+       {
+         name: generateRandomName(),
+         deeply: {
+           nested: {
+             first: Math.random() * 100,
+             second: state.deeply.nested.second + 1,
            },
-           { overwrite: true }
-       );
-   }
+         },
+       },
+       { overwrite: true }
+     );
+   };
    ```
 
 3. **Functionally Setting State**:
@@ -47,12 +53,12 @@ Managing state in React can sometimes get messy, especially when dealing with ne
 
    ```javascript
    const handleFunctionalSetState = (): void => {
-       setState((draft) => {
-           draft.shallowDate = new Date().toISOString();
-           draft.name = generateRandomName();
-           draft.deeply.nested.first += 1;
-       });
-   }
+     setState((draft) => {
+       draft.shallowDate = new Date().toISOString();
+       draft.name = generateRandomName();
+       draft.deeply.nested.first += 1;
+     });
+   };
    ```
 
 4. **Combining State Updates**:
@@ -61,34 +67,189 @@ Managing state in React can sometimes get messy, especially when dealing with ne
 
    ```javascript
    const handleCombinedSetState = (): void => {
-       setState((draft) => {
-           draft.deeply.nested.first += 3;
-           draft.deeply.nested.anotherCompletely.different.madeup.nest = {
-               date: new Date().toISOString(),
-           };
-       });
-   }
+     setState((draft) => {
+       draft.deeply.nested.first += 3;
+       draft.deeply.nested.anotherCompletely.different.madeup.nest = {
+         date: new Date().toISOString(),
+       };
+     });
+   };
    ```
 
 ### **Installation**:
 
-- Ensure you have the `use-immer` package installed.
+- Ensure you have the `use-immer` package installed. `npm i use-immer` or `yarn add use-immer`.
 - Integrate the `SiteContext` and `SiteContextProvider` in your application.
 - Wrap your root component (or any other component subtree) with the `SiteContextProvider`.
 
-### **Example Component**:
+```tsx
+import createContextProviderCreator from "@/lib/createState";
 
-Here's an example component showcasing how to use ImmerFluent:
+type MyState = {
+  deeply: {
+    nested: { first: number; second: number; third: { a: number; b: number } };
+    anotherNest: { a: number; b: number };
+  };
+  name: string;
+  neverChange: number;
+};
 
-```jsx
-import React from 'react';
-import { useSiteContext } from '@/context/SiteContext';
+const [MyContextProvider, useMyContext] = createContextProviderCreator<MyState>(
+  {
+    deeply: {
+      nested: { first: 123, second: 456, third: { a: 1, b: 2 } },
+      anotherNest: { a: 789, b: 123 },
+    },
+    name: "John",
+    neverChange: 789,
+  }
+);
 
-function ExampleComponent() {
-    const { state, setState, dispatch } = useSiteContext();
-    ... // Rest of the component code
-}
+// Now, you can use `MyContextProvider` as a provider in your component tree and `useMyContext` as a custom hook.
 ```
 
+```tsx
+// @lib/createState
+import React, { createContext, useCallback, useContext, useMemo } from "react";
+import { Draft } from "immer";
+import { useImmerReducer } from "use-immer";
+
+/**
+ * Recursive type to handle nested partial objects.
+ */
+type RecursivePartial<T> = {
+  [P in keyof T]?: RecursivePartial<T[P]> | T[P];
+};
+
+/**
+ * Options to control how the state is set.
+ */
+type SetStateOptions = {
+  overwrite?: boolean;
+};
+
+/**
+ * Create a context provider with built-in immer functionality for state management.
+ * @param defaultState The initial state for the context.
+ */
+export const createContextProviderCreator = <T extends {}>(defaultState: T) => {
+  type StateUpdater = (draft: Draft<T>) => void;
+
+  type SetPartialStateAction = {
+    type: "SET_PARTIAL_STATE";
+    value: RecursivePartial<T>;
+    settings: SetStateOptions;
+  };
+
+  type UpdateStateAction = {
+    type: "UPDATE_STATE";
+    value: StateUpdater;
+    settings?: SetStateOptions;
+  };
+
+  type Action = SetPartialStateAction | UpdateStateAction;
+
+  type InitialStateType = {
+    state: T;
+    setState: (
+      partialOrUpdater: RecursivePartial<T> | StateUpdater,
+      options?: SetStateOptions
+    ) => void;
+    dispatch: React.Dispatch<Action>;
+  };
+
+  const immerReducer = (draft: Draft<T>, action: Action) => {
+    switch (action.type) {
+      case "UPDATE_STATE":
+        if (action.settings?.overwrite) {
+          const updatedState: T = {} as any;
+          action.value(updatedState as Draft<T>);
+          Object.assign(draft, updatedState);
+        } else {
+          action.value(draft);
+        }
+        break;
+      case "SET_PARTIAL_STATE":
+        if (action.settings.overwrite) {
+          Object.assign(draft, action.value);
+        } else {
+          mergeObjects(draft, action.value);
+        }
+        break;
+    }
+  };
+
+  /**
+   * Merge source object into target object recursively.
+   * @param target The target object.
+   * @param source The source object.
+   */
+  function mergeObjects(target: any, source: any) {
+    for (const key in source) {
+      if (source[key] instanceof Object && target.hasOwnProperty(key)) {
+        mergeObjects(target[key], source[key]);
+      } else {
+        target[key] = source[key];
+      }
+    }
+  }
+
+  const Context = createContext<InitialStateType>({
+    state: defaultState,
+    setState: () => {},
+    dispatch: () => {},
+  });
+
+  const Provider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+    const [state, dispatch] = useImmerReducer(immerReducer, defaultState);
+
+    const setState = useCallback(
+      (
+        partialOrUpdater: RecursivePartial<T> | StateUpdater,
+        options: SetStateOptions = {}
+      ) => {
+        if (typeof partialOrUpdater === "function") {
+          dispatch({
+            type: "UPDATE_STATE",
+            value: partialOrUpdater as StateUpdater,
+            settings: options,
+          });
+        } else {
+          dispatch({
+            type: "SET_PARTIAL_STATE",
+            value: partialOrUpdater,
+            settings: options,
+          });
+        }
+      },
+      [dispatch]
+    );
+
+    const value = useMemo(
+      () => ({ state, setState, dispatch }),
+      [state, setState, dispatch]
+    );
+
+    return <Context.Provider value={value}>{children}</Context.Provider>;
+  };
+
+  /**
+   * Custom hook to consume context and provide helpful error if context is missing.
+   */
+  const useContextHook = () => {
+    const context = useContext(Context);
+    if (!context) {
+      throw new Error(
+        `Custom context hook must be used within its related Provider.`
+      );
+    }
+    return context;
+  };
+
+  return [Provider, useContextHook] as const;
+};
+
+export default createContextProviderCreator;
+```
 
 With **ImmerFluent**, state management becomes more intuitive, and you can effortlessly manage complex state structures. Say goodbye to spread operators and deep clones, and embrace the simplicity and power of ImmerFluent.
