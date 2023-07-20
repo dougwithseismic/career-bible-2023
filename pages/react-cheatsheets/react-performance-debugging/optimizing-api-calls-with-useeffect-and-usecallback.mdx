@@ -1,6 +1,7 @@
-Sure, let's dive into "Optimizing API Calls with `useEffect` and `useCallback`" with the tone of voice you've specified:
+# Cheatsheet: Optimizing API Calls Relying On User Input
 
-React's Hooks `useEffect` and `useCallback` can be powerful allies when it comes to dealing with API calls. By judiciously applying these hooks, we can sidestep unnecessary network requests, bolster performance, and generally make our applications more responsive and pleasant for users. 
+React's Hooks `useEffect` and `useCallback` are great tools when it comes to dealing with API They allow us to carve out a balance between performance and UX by sidestepping unnecessary network requests, bolstering performance, and generally making our UI more responsive and pleasant for users.
+
 
 ## Case Study 1: Debouncing API Calls in a Search Component
 
@@ -10,18 +11,26 @@ Envision a `Search` component in which every keystroke initiates a network reque
 
 Let's start with a basic `Search` component that sends a request with every keystroke:
 
-```jsx
-import React, { useState, useEffect } from 'react';
-import axios from 'axios';
+```tsx
+import React, { useState, useEffect } from "react";
+import axios from "axios";
 
-const Search = () => {
-  const [term, setTerm] = useState('');
-  const [results, setResults] = useState([]);
+interface Result {
+  id: string;
+  title: string;
+  // other fields...
+}
+
+const Search: React.FC = () => {
+  const [term, setTerm] = useState<string>("");
+  const [results, setResults] = useState<Result[]>([]);
 
   useEffect(() => {
     const fetchResults = async () => {
-      const { data } = await axios.get(`https://api.example.com/search?term=${term}`);
-      setResults(data);
+      const response = await axios.get<Result[]>(
+        `https://api.example.com/search?term=${term}`
+      );
+      setResults(response.data);
     };
 
     fetchResults();
@@ -29,23 +38,33 @@ const Search = () => {
 
   // ... render the component ...
 };
+
+export default Search;
 ```
 
 **Step 2: Apply useCallback**
 
 Next, let's wrap our API call in the `useCallback` hook. This will give us a memoized version of the function, which means it will only change if its dependencies change:
 
-```jsx
-import React, { useState, useEffect, useCallback } from 'react';
-import axios from 'axios';
+```tsx
+import React, { useState, useEffect, useCallback } from "react";
+import axios from "axios";
 
-const Search = () => {
-  const [term, setTerm] = useState('');
-  const [results, setResults] = useState([]);
+interface Result {
+  id: string;
+  title: string;
+  // other fields...
+}
+
+const Search: React.FC = () => {
+  const [term, setTerm] = useState<string>("");
+  const [results, setResults] = useState<Result[]>([]);
 
   const fetchResults = useCallback(async () => {
-    const { data } = await axios.get(`https://api.example.com/search?term=${term}`);
-    setResults(data);
+    const response = await axios.get<Result[]>(
+      `https://api.example.com/search?term=${term}`
+    );
+    setResults(response.data);
   }, [term]);
 
   useEffect(() => {
@@ -53,23 +72,35 @@ const Search = () => {
   }, [fetchResults]);
 
   // ... render the component ...
+
+  return <div>{/* JSX content goes here */}</div>;
 };
+
+export default Search;
 ```
 
 **Step 3: Debounce with useEffect**
 
 Finally, let's debounce our API calls using a combination of `useEffect` and `useCallback`. We'll add a delay to our `useEffect` hook so that it waits for the user to stop typing before it sends a request:
 
-```jsx
-import React, { useState, useEffect, useCallback } from 'react';
-import axios from 'axios';
+```tsx
+import React, { useState, useEffect, useCallback } from "react";
+import axios, { AxiosResponse } from "axios";
 
-const Search = () => {
-  const [term, setTerm] = useState('');
-  const [results, setResults] = useState([]);
+interface Result {
+  id: string;
+  title: string;
+  // other fields...
+}
+
+const Search: React.FC = () => {
+  const [term, setTerm] = useState<string>("");
+  const [results, setResults] = useState<Result[]>([]);
 
   const fetchResults = useCallback(async () => {
-    const { data } = await axios.get(`https://api.example.com/search?term=${term}`);
+    const { data }: AxiosResponse<Result[]> = await axios.get(
+      `https://api.example.com/search?term=${term}`
+    );
     setResults(data);
   }, [term]);
 
@@ -82,9 +113,651 @@ const Search = () => {
   }, [fetchResults]);
 
   // ... render the component ...
+
+  return <div>{/* JSX content goes here */}</div>;
+};
+
+export default Search;
+```
+
+Here, we've added a 500ms delay before the API call is made. If the user types something else within this delay, the previous API call is cancelled, and the timer is reset. Now, we've got a component that makes API calls intelligently, considering both user experience and API load.
+
+## Case Study 2: Reducing Unnecessary API Calls in a Pagination Component
+
+Picture a `Pagination` component that sends an API request every time the page changes. However, the component also makes a new request even if the user re-selects the current page. Here's how we can utilize `useEffect` and `useCallback` to avoid unnecessary network requests.
+
+**Step 1: The Initial Structure**
+
+We start with a basic `Pagination` component that triggers an API call each time the page changes:
+
+```jsx
+import React, { useState, useEffect } from "react";
+import axios from "axios";
+
+const Pagination = () => {
+  const [page, setPage] = useState(1);
+  const [data, setData] = useState([]);
+
+  useEffect(() => {
+    const fetchData = async () => {
+      const { data } = await axios.get(`https://api.example.com/page=${page}`);
+      setData(data);
+    };
+
+    fetchData();
+  }, [page]);
+
+  // ... render the component ...
 };
 ```
 
-Here, we've added a 500ms delay before the API call is made. If the user types something else within this delay, the previous API call is cancelled, and the timer is reset. Now, we've got a component that makes API calls intelligently, considering both user experience and API load. 
+**Step 2: Implement useCallback**
 
-Remember, with great power comes great responsibility. Use these hooks wisely to tune the performance of your React applications.
+Next, we encapsulate the API call inside the `useCallback` hook. The memoized version of the function will only update if its dependencies change:
+
+```jsx
+import React, { useState, useEffect, useCallback } from "react";
+import axios from "axios";
+
+const Pagination = () => {
+  const [page, setPage] = useState(1);
+  const [data, setData] = useState([]);
+
+  const fetchData = useCallback(async () => {
+    const { data } = await axios.get(`https://api.example.com/page=${page}`);
+    setData(data);
+  }, [page]);
+
+  useEffect(() => {
+    fetchData();
+  }, [fetchData]);
+
+  // ... render the component ...
+};
+```
+
+**Step 3: Avoid unnecessary API calls**
+
+Now we add an extra layer of intelligence to our component. We only want to call `fetchData` when the page truly changes. We can achieve this by storing the previous page value and comparing it with the current page:
+
+```jsx
+import React, { useState, useEffect, useCallback, useRef } from "react";
+import axios from "axios";
+
+const Pagination = () => {
+  const [page, setPage] = useState(1);
+  const [data, setData] = useState([]);
+  const prevPageRef = useRef(page);
+
+  const fetchData = useCallback(async () => {
+    if (prevPageRef.current !== page) {
+      const { data } = await axios.get(`https://api.example.com/page=${page}`);
+      setData(data);
+    }
+  }, [page]);
+
+  useEffect(() => {
+    fetchData();
+    prevPageRef.current = page;
+  }, [fetchData, page]);
+
+  // ... render the component ...
+};
+```
+
+By comparing the current page with the previous page before making the API call, we avoid sending redundant requests when the page hasn't actually changed. Thus, we optimize our React component by reducing unnecessary network requests, enhancing the overall performance.
+
+## Case Study 3: Intelligent API Request Throttling in a Multi-Filter Component
+
+Consider a `Filter` component where each filter change initiates a network request. This could result in a multitude of network requests, affecting performance and potentially overwhelming the API server. By leveraging `useEffect` and `useCallback`, we can optimize our application, improving performance and the user experience.
+
+**Step 1: Initial Setup**
+
+Let's start with a simple `Filter` component that sends a request every time a filter changes:
+
+```jsx
+import React, { useState, useEffect } from "react";
+import axios from "axios";
+
+const Filter = () => {
+  const [filters, setFilters] = useState({ color: "", size: "" });
+  const [results, setResults] = useState([]);
+
+  useEffect(() => {
+    const fetchResults = async () => {
+      const { data } = await axios.get(`https://api.example.com/search`, {
+        params: filters,
+      });
+      setResults(data);
+    };
+
+    fetchResults();
+  }, [filters]);
+
+  // ... render the component ...
+};
+```
+
+**Step 2: Introduce useCallback**
+
+The next step is to encapsulate the API call in the `useCallback` hook. This will provide us with a memoized version of the function that only changes when its dependencies do:
+
+```jsx
+import React, { useState, useEffect, useCallback } from "react";
+import axios from "axios";
+
+const Filter = () => {
+  const [filters, setFilters] = useState({ color: "", size: "" });
+  const [results, setResults] = useState([]);
+
+  const fetchResults = useCallback(async () => {
+    const { data } = await axios.get(`https://api.example.com/search`, {
+      params: filters,
+    });
+    setResults(data);
+  }, [filters]);
+
+  useEffect(() => {
+    fetchResults();
+  }, [fetchResults]);
+
+  // ... render the component ...
+};
+```
+
+**Step 3: Throttle API Calls with useEffect**
+
+Finally, let's throttle our API calls using `useEffect` and `useCallback`. By introducing a delay in our `useEffect` hook, we can ensure that it waits a reasonable time before sending a request:
+
+```jsx
+import React, { useState, useEffect, useCallback } from "react";
+import axios from "axios";
+
+const Filter = () => {
+  const [filters, setFilters] = useState({ color: "", size: "" });
+  const [results, setResults] = useState([]);
+
+  const fetchResults = useCallback(async () => {
+    const { data } = await axios.get(`https://api.example.com/search`, {
+      params: filters,
+    });
+    setResults(data);
+  }, [filters]);
+
+  useEffect(() => {
+    const timerId = setTimeout(fetchResults, 1000);
+
+    return () => {
+      clearTimeout(timerId);
+    };
+  }, [fetchResults]);
+
+  // ... render the component ...
+};
+```
+
+In this step, we've introduced a 1000ms delay before executing the API call. This means the API request will only be sent after a full second has passed without any filter changes. If a filter is adjusted during this delay, the previous API call is cancelled, and the timer resets.
+
+This approach provides a more responsive user experience, avoids unnecessary network requests, and reduces server load. Keep in mind that while powerful, this technique should be applied thoughtfully, considering both the user experience and the specific demands of your application.
+
+## Case Study 4: Conditional API Calls in a Profile Update Component
+
+Imagine a `Profile` component that allows users to update their details. The component sends an API request every time the user clicks the save button. However, if there are no changes in the user's information, the component should not make an unnecessary API request. Here's how we can apply `useEffect` and `useCallback` to avoid these needless network requests.
+
+**Step 1: Initial Setup**
+
+First, let's start with a basic `Profile` component that triggers an API call each time the save button is clicked:
+
+```jsx
+import React, { useState, useEffect } from "react";
+import axios from "axios";
+
+const Profile = ({ initialProfile }) => {
+  const [profile, setProfile] = useState(initialProfile);
+
+  useEffect(() => {
+    const saveProfile = async () => {
+      await axios.put(`https://api.example.com/profile`, profile);
+    };
+
+    saveProfile();
+  }, [profile]);
+
+  // ... render the component ...
+};
+```
+
+**Step 2: Implement useCallback**
+
+Next, we encapsulate the API call in the `useCallback` hook. This provides a memoized version of the function that will only update if its dependencies change:
+
+```jsx
+import React, { useState, useEffect, useCallback } from "react";
+import axios from "axios";
+
+const Profile = ({ initialProfile }) => {
+  const [profile, setProfile] = useState(initialProfile);
+
+  const saveProfile = useCallback(async () => {
+    await axios.put(`https://api.example.com/profile`, profile);
+  }, [profile]);
+
+  useEffect(() => {
+    saveProfile();
+  }, [saveProfile]);
+
+  // ... render the component ...
+};
+```
+
+**Step 3: Avoid Unnecessary API Calls**
+
+Finally, we add intelligence to our component. We want to call `saveProfile` only when there are actual changes to the user's profile:
+
+```jsx
+import React, { useState, useEffect, useCallback, useRef } from "react";
+import axios from "axios";
+
+const Profile = ({ initialProfile }) => {
+  const [profile, setProfile] = useState(initialProfile);
+  const initialProfileRef = useRef(initialProfile);
+
+  const saveProfile = useCallback(async () => {
+    if (JSON.stringify(initialProfileRef.current) !== JSON.stringify(profile)) {
+      await axios.put(`https://api.example.com/profile`, profile);
+    }
+  }, [profile]);
+
+  useEffect(() => {
+    saveProfile();
+    initialProfileRef.current = profile;
+  }, [saveProfile, profile]);
+
+  // ... render the component ...
+};
+```
+
+In this final step, we compare the initial profile with the current profile before making the API call, avoiding redundant requests when the profile hasn't actually changed. This results in a smarter React component that reduces unnecessary network requests and enhances performance.
+
+## Case Study 5: Instant Profile Update with Real-Time API Calls
+
+Imagine a `Profile` component where every change made by the user instantly updates their profile by triggering an API request. However, if the user makes rapid changes, we risk making numerous, unnecessary requests. By effectively using `useEffect` and `useCallback`, we can prevent these redundant calls.
+
+**Step 1: Initial Setup**
+
+Let's begin with a basic `Profile` component that sends an API request every time the user alters their profile:
+
+```jsx
+import React, { useState, useEffect } from "react";
+import axios from "axios";
+
+const Profile = ({ initialProfile }) => {
+  const [profile, setProfile] = useState(initialProfile);
+
+  useEffect(() => {
+    const updateProfile = async () => {
+      await axios.put(`https://api.example.com/profile`, profile);
+    };
+
+    updateProfile();
+  }, [profile]);
+
+  // ... render the component ...
+};
+```
+
+**Step 2: Implement useCallback**
+
+Next, we'll encase the API call in the `useCallback` hook. This gives us a memoized version of the function that only changes when its dependencies change:
+
+```jsx
+import React, { useState, useEffect, useCallback } from "react";
+import axios from "axios";
+
+const Profile = ({ initialProfile }) => {
+  const [profile, setProfile] = useState(initialProfile);
+
+  const updateProfile = useCallback(async () => {
+    await axios.put(`https://api.example.com/profile`, profile);
+  }, [profile]);
+
+  useEffect(() => {
+    updateProfile();
+  }, [updateProfile]);
+
+  // ... render the component ...
+};
+```
+
+**Step 3: Optimized API Calls with useRef**
+
+Finally, we optimize our component by comparing the previous profile with the current one before making the API call. We avoid sending unnecessary requests when the profile hasn't changed, improving both performance and efficiency:
+
+```jsx
+import React, { useState, useEffect, useCallback, useRef } from "react";
+import axios from "axios";
+
+const Profile = ({ initialProfile }) => {
+  const [profile, setProfile] = useState(initialProfile);
+  const prevProfileRef = useRef(profile);
+
+  const updateProfile = useCallback(async () => {
+    if (JSON.stringify(prevProfileRef.current) !== JSON.stringify(profile)) {
+      await axios.put(`https://api.example.com/profile`, profile);
+    }
+  }, [profile]);
+
+  useEffect(() => {
+    updateProfile();
+    prevProfileRef.current = profile;
+  }, [updateProfile, profile]);
+
+  // ... render the component ...
+};
+```
+
+In this configuration, the component now only makes an API request if there's an actual change in the profile data, reducing the number of network requests.
+
+## Case Study 6: Creating a Custom Hook for Optimized API Calls
+
+Putting this all together, let's write a `useApiRequest` Custom Hook that allows debouncing and dependency checks for API calls to avoid unnecessary requests when params haven't changed, or a user is still making UI changes.
+
+**Step 1: Initial Setup**
+
+First, let's define a custom hook that performs an API request and sets the response to the state. It will be named `useApiRequest`, and it will take the initial data, request type, path, initial parameters, and delay as arguments:
+
+```jsx
+import { useState, useEffect, useCallback } from "react";
+import axios from "axios";
+
+const useApiRequest = (
+  initialData,
+  requestType,
+  path,
+  initialParams,
+  delay
+) => {
+  const [data, setData] = useState(initialData);
+  const [params, setParams] = useState(initialParams);
+
+  // We'll define the apiRequest function in the next step...
+
+  return [data, setData, setParams];
+};
+```
+
+**Step 2: Incorporating useCallback and useRef**
+
+Next, we define the `apiRequest` function using `useCallback` to prevent unnecessary re-creations of the function. Additionally, we employ `useRef` to hold a reference to the previous data and parameters, allowing us to check if they've changed before performing the API request:
+
+```jsx
+import { useState, useEffect, useCallback, useRef } from "react";
+import axios from "axios";
+
+const useApiRequest = (
+  initialData,
+  requestType,
+  path,
+  initialParams,
+  delay
+) => {
+  const [data, setData] = useState(initialData);
+  const [params, setParams] = useState(initialParams);
+  const prevDataRef = useRef(data);
+  const prevParamsRef = useRef(params);
+
+  const apiRequest = useCallback(async () => {
+    if (
+      JSON.stringify(prevDataRef.current) !== JSON.stringify(data) ||
+      JSON.stringify(prevParamsRef.current) !== JSON.stringify(params)
+    ) {
+      let response;
+      switch (requestType) {
+        case "GET":
+          response = await axios.get(path, { params });
+          break;
+        case "POST":
+          response = await axios.post(path, data);
+          break;
+        case "PUT":
+          response = await axios.put(path, data);
+          break;
+        case "DELETE":
+          response = await axios.delete(path);
+          break;
+        default:
+          throw new Error("Invalid request type");
+      }
+      setData(response.data);
+      prevDataRef.current = data;
+      prevParamsRef.current = params;
+    }
+  }, [data, requestType, path, params]);
+
+  return [data, setData, setParams];
+};
+```
+
+**Step 3: Applying useEffect for Debouncing**
+
+Finally, we leverage `useEffect` to manage the timing of the API request. The `setTimeout` function, together with the `delay` argument, provides a debounce effect, preventing the request from being sent until the user has stopped making changes for a certain period:
+
+```jsx
+import { useState, useEffect, useCallback, useRef } from 'react';
+import axios from 'axios';
+
+const useApiRequest = (initialData, requestType, path, initialParams, delay) => {
+  const [data, setData] = useState(initialData);
+  const [params, setParams] = useState(initialParams);
+  const prevDataRef = useRef(data);
+  const prevParamsRef = useRef(params);
+
+  const apiRequest = useCallback(async () => {
+    if (JSON.stringify(prevDataRef.current) !== JSON.stringify(data) ||
+        JSON.stringify(prevParams
+
+Ref.current) !== JSON.stringify(params)) {
+
+      let response;
+      switch(requestType) {
+        case 'GET':
+          response = await axios.get(path, { params });
+          break;
+        case 'POST':
+          response = await axios.post(path, data);
+          break;
+        case 'PUT':
+          response = await axios.put(path, data);
+          break;
+        case 'DELETE':
+          response = await axios.delete(path);
+          break;
+        default:
+          throw new Error('Invalid request type');
+      }
+      setData(response.data);
+      prevDataRef.current = data;
+      prevParamsRef.current = params;
+    }
+  }, [data, requestType, path, params]);
+
+  useEffect(() => {
+    const timerId = setTimeout(apiRequest, delay);
+
+    return () => {
+      clearTimeout(timerId);
+    };
+  }, [apiRequest, delay]);
+
+  return [data, setData, setParams];
+};
+```
+
+And finally, let's do a final refactoring to clear up the code, add an isLoading state for data, and handle any errors. We'll need these so our components can handle various states and update the UI accordinly to always keep the user informed of what's going on.
+
+- **Introduced New State Variables:** We added `isLoading` and `error` as new state variables. `isLoading` will be used to track the loading status of the API request, while `error` will store any errors that occur during the API request.
+
+- **Updated `apiRequest` function:**
+
+  - **Add Types:** We added types to the `apiRequest` function to make it more readable and easier to understand.
+
+  - **Start of Request:** As soon as the API request begins, we set `isLoading` to `true` and `error` to `null`. This indicates that the request has started and there are currently no errors.
+
+  - **Successful Request:** In case of a successful request, we follow the same approach as before - updating the `data` and storing the current `data` and `params` into their respective refs.
+
+  - **Error Handling:** We wrapped the API call in a try-catch block. If an error is thrown during the request, we catch the error and store it in the `error` state variable.
+
+  - **End of Request:** Finally, regardless of whether the request was successful or an error occurred, we set `isLoading` to `false` to indicate that the request has finished.
+
+- **Updated Hook Return Values:** Lastly, we updated the return values of the hook to include the new state variables `isLoading` and `error`. This allows the component using the hook to access and handle the loading status and any errors.
+
+```tsx
+import { useState, useEffect, useCallback, useRef } from "react";
+import axios, { AxiosResponse } from "axios";
+
+// Generic Request Config interface
+interface RequestConfig<T> {
+  initialData: T;
+  requestType: "GET" | "POST" | "PUT" | "DELETE";
+  url: string;
+  initialParameters?: T;
+  delay: number;
+}
+
+// Generic return type of useApiRequest
+type UseApiRequestReturn<T> = [
+  data: T,
+  setData: React.Dispatch<React.SetStateAction<T>>,
+  setParameters: React.Dispatch<React.SetStateAction<T>>,
+  isLoading: boolean,
+  error: Error | null
+];
+
+// Generic performRequest function
+const performRequest = async <T,>(
+  requestType: "GET" | "POST" | "PUT" | "DELETE",
+  url: string,
+  parameters: T,
+  data: T
+): Promise<AxiosResponse<T>> => {
+  switch (requestType) {
+    case "GET":
+      return await axios.get<T>(url, { params: parameters });
+    case "POST":
+      return await axios.post<T>(url, data);
+    case "PUT":
+      return await axios.put<T>(url, data);
+    case "DELETE":
+      return await axios.delete<T>(url);
+    default:
+      throw new Error("Invalid request type");
+  }
+};
+
+// Generic useApiRequest hook
+const useApiRequest = <T,>({
+  initialData,
+  requestType,
+  url,
+  initialParameters = {} as T,
+  delay,
+}: RequestConfig<T>): UseApiRequestReturn<T> => {
+  const [data, setData] = useState<T>(initialData);
+  const [parameters, setParameters] = useState<T>(initialParameters);
+  const [isLoading, setIsLoading] = useState<boolean>(false);
+  const [error, setError] = useState<Error | null>(null);
+
+  const previousData = useRef<T>(data);
+  const previousParameters = useRef<T>(parameters);
+
+  const executeApiRequest = useCallback(async () => {
+    if (
+      JSON.stringify(previousData.current) !== JSON.stringify(data) ||
+      JSON.stringify(previousParameters.current) !== JSON.stringify(parameters)
+    ) {
+      setIsLoading(true);
+      setError(null);
+
+      try {
+        const response = await performRequest<T>(
+          requestType,
+          url,
+          parameters,
+          data
+        );
+        setData(response.data);
+        previousData.current = data;
+        previousParameters.current = parameters;
+      } catch (error) {
+        setError(error);
+      } finally {
+        setIsLoading(false);
+      }
+    }
+  }, [data, requestType, url, parameters]);
+
+  useEffect(() => {
+    const timerId = setTimeout(executeApiRequest, delay);
+    return () => clearTimeout(timerId);
+  }, [executeApiRequest, delay]);
+
+  return [data, setData, setParameters, isLoading, error];
+};
+```
+
+### Examples
+
+Now that we have our hook, let's see how we can use it in our components -
+
+#### `GET` Request
+
+```tsx
+// Usage of useApiRequest with User type
+// User data type
+interface User {
+  name: string;
+  age: number;
+  email: string;
+}
+
+const DisplayUsers = () => {
+  const [userData, setUserData, setParameters, isLoading, error] =
+    useApiRequest<User>({
+      initialData: { name: "", age: 0, email: "" },
+      requestType: "GET",
+      url: "/api/user",
+      delay: 1000,
+    });
+
+  // ... use the userData, setUserData, setParameters, isLoading, error in your component
+};
+```
+
+#### `POST` Request
+
+```tsx
+// Example data type for a POST request
+interface PostData {
+  title: string;
+  body: string;
+  userId: number;
+}
+
+// Example component
+const ExampleComponent = () => {
+  const [postData, setPostData, setParameters, isLoading, error] =
+    useApiRequest<PostData>({
+      initialData: { title: "foo", body: "bar", userId: 1 }, // The body of the POST request
+      requestType: "POST",
+      url: "/api/posts",
+      delay: 1000,
+    });
+
+  // ... use postData, setPostData, setParameters, isLoading, error in your component
+};
+```
+
+
+## Conclusion
+
+So there you have it! Advanced data fetching with React Hooks, taking user experience and server load into consideration. These techniques can be overkill in smaller apps, but once you're really getting down to optimizing performance, i'd recommend learning these patterns to see what fits.

@@ -1,19 +1,20 @@
-# Cheatsheet: Offloading to Web Workers in TypeScript and React
+# Advanced Techniques: Improving Performance with Web Workers in TypeScript & React
 
-Alright, mate! Ever had a scenario where your React app's doing so many number crunches it's behaving like an overworked accountant during tax season? It's time to call in some extra help with Web Workers. Let's dive in and free up that main thread, shall we?
+Hello seasoned React developers! You've likely encountered scenarios where computational heavy lifting causes your React app to lag, much like an overburdened accountant during tax season. Web Workers can provide much-needed relief. They offload tasks, ensuring your main thread remains free and responsive.
 
-## The Issue at Hand - Congested Main Thread
+## Problem - Main Thread Overload
 
-If you're asking your main thread to do all the work, it's bound to get overwhelmed at some point. Too many computations can lead to a janky, unresponsive UI, and nobody wants that. 
+Overloading the main thread with excessive computations can lead to a sluggish, unresponsive user interface (UI). This is far from ideal.
 
-Let's take a gander at this number-crunching component for our online shop. You've got a function `findBestDeal` that sifts through all your products to find the best deal based on some complex calculations.
+Consider this example where we have a function `findBestDeal` in our e-commerce app. This function performs complex calculations across a list of products to identify the best deal.
 
 **BestDeal.tsx**
+
 ```typescript
-import React from 'react';
+import React from "react";
 
 const findBestDeal = (products: Array<Product>) => {
-  // Some heavy computations...
+  // Complex computations...
 };
 
 const BestDeal = ({ products }: { products: Array<Product> }) => {
@@ -25,13 +26,12 @@ const BestDeal = ({ products }: { products: Array<Product> }) => {
 export default BestDeal;
 ```
 
-## The Calvary - Web Workers
+## Solution - Web Workers
 
-Web Workers to the rescue! They're like your own personal assistants, taking on those heavy tasks and leaving your main thread free to focus on user interactions.
-
-Let's create a new worker file that will take care of finding the best deal.
+Web Workers can handle these intensive tasks, allowing the main thread to focus on user interactions. Let's create a worker that will compute the best deal.
 
 **bestDealWorker.ts**
+
 ```typescript
 self.onmessage = (event) => {
   const products = event.data;
@@ -43,12 +43,13 @@ self.onmessage = (event) => {
 
 ## Integrating Web Workers with React
 
-Here's how we can put our new worker to work in the `BestDeal` component.
+We can now integrate our newly minted worker within the `BestDeal` component.
 
 **BestDeal.tsx**
+
 ```typescript
-import React, { useEffect, useState } from 'react';
-import Worker from './bestDealWorker';
+import React, { useEffect, useState } from "react";
+import Worker from "./bestDealWorker";
 
 const BestDeal = ({ products }: { products: Array<Product> }) => {
   const [bestDeal, setBestDeal] = useState<Product | null>(null);
@@ -60,14 +61,12 @@ const BestDeal = ({ products }: { products: Array<Product> }) => {
     return () => worker.terminate();
   }, [products]);
 
-  return <div>Best deal: {bestDeal ? bestDeal.name : 'Calculating...'}</div>;
+  return <div>Best deal: {bestDeal ? bestDeal.name : "Calculating..."}</div>;
 };
 
 export default BestDeal;
 ```
 
-## The Lowdown
+## Summary
 
-Just like that, you've handed off the hard graft to a Web Worker. The UI stays responsive because your main thread is as free as a bird, and the computations are handled in the background.
-
-Web Workers aren't a silver bullet and might not be the right fit for every scenario. They come with a little bit of extra complexity and some restrictions (like no DOM access), but when you're dealing with heavy computations, they're a great tool to have in your toolkit. You're a badass, now.
+Utilizing Web Workers, we've successfully delegated intensive tasks, keeping our main thread unencumbered and responsive. It's important to note that while Web Workers enhance performance in certain scenarios, they are not universally applicable and introduce their own complexity. For instance, they cannot access the DOM. However, in the case of heavy computations, they are undoubtedly a valuable tool in your optimization toolbox. Congratulations, you're effectively harnessing the power of Web Workers!

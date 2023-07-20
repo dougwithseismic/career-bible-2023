@@ -2,7 +2,7 @@ import React from "react";
 import { DocsThemeConfig } from "nextra-theme-docs";
 
 const config: DocsThemeConfig = {
-  logo: <span>Practical Guides From A Self-Taught Technical Lead</span>,
+  logo: <span>Practical Guides From A Serial Software Shipper</span>,
   project: {
     link: "https://github.com/dougwithseismic/career-bible-2023",
   },
